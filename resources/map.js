@@ -8,7 +8,6 @@ $(document).ready(function() {
 		layers: [self.tileLayer, self.hospitalLayer]
 	});
 
-	$('body').bind('hospitalsfetched', renderHospitalIcon);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
@@ -18,15 +17,7 @@ $(document).ready(function() {
 	function geojsonLayer() {
 		var converter = new op2geojson();
 		var data = converter.geojson();
-		var style = {
-			color: "red",
-			weight : 50,
-			opacity : 0.65
-		};
 		var layer = L.geoJson(data, {
-			style: function(feature) {
-				return style;
-			},
 			onEachFeature: function(feature, layer) {
 				layer.bindPopup(feature.properties.name);
 			}
@@ -40,12 +31,6 @@ $(document).ready(function() {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
 		});
-		// L.geoJson(self.hospitalLayer, {
-		// 	pointToLayer: function(feature, latlng) {
-		// 		debugger;
-		// 		L.circleMarker(latlng);
-		// 	}
-		// })
 	}
 
 	function initLayerControl() {
