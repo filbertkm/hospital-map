@@ -5,42 +5,46 @@ op2geojson = function() {
 	var instance = {},
 		geojson;
 
-	instance.fetch = function(url) {
-    	$.getJSON("http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;", {
-				format: "json"
-			},
+	instance.fetch = function(url, callback) {
+    	$.getJSON(url, { format: "json" },
 			function(data) {
-				$.each(data, function(i, item) {
-					console.log(item);
+				var features = [];
+				$.each(data.elements, function(i, item) {
+					if( item.type === 'node' ) {
+						features.push( instance.point(item) );
+					}
 				});
+				geojson = instance.featureCollection(features);
+				callback(geojson);
 			}
 		);
 	};
 
-	instance.feature = function() {
+	instance.point = function(node) {
 		point = {
+			"type" : "Feature",
 			"geometry" : {
 				"type" : "Point",
-				"coordinates" : [13.3172386,52.480732]
+				"coordinates" : [node.lon,node.lat]
 			},
-			"type" : "Feature",
 			"properties" : { "name" : "Sankt Gertrauden-Krankenhaus" },
 		};
 		return point;
 	}
 
-	instance.featureCollection = function() {
+	instance.featureCollection = function(features) {
 		collection = {
 			"type" : "FeatureCollection",
-			"features" : [
-				instance.feature(),
-			]
+			"features" : features
 		};
 		return collection;
 	}
 
 	instance.geojson = function() {
-		return instance.featureCollection();
+		url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
+		instance.fetch(url, function(data) {
+			return data;
+		});
 	}
 
 	return instance;
