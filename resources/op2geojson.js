@@ -21,20 +21,15 @@ op2geojson = function() {
 	};
 
 	instance.point = function(node) {
-		var name;
-		if ( typeof node.tags.name != 'undefined' ) {
-			name = node.tags.name;
-		} else {
-			name = '';
-		}
 		var point = {
 			"type" : "Feature",
 			"geometry" : {
 				"type" : "Point",
 				"coordinates" : [node.lon,node.lat]
 			},
-			"properties" : { "name" : name },
+			"properties" : {}
 		};
+		_.extend(point.properties, node.tags);
 		return point;
 	}
 

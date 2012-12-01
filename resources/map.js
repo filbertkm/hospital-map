@@ -34,9 +34,10 @@ $(document).ready(function() {
 		var url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](" + bbox + ");out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
+			console.log(data);
 			layer = L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
-					layer.bindPopup(feature.properties.name);
+					layer.bindPopup(feature.properties);
 				}
 			});
 			self.hospitalLayer.addData(data);
@@ -53,7 +54,7 @@ $(document).ready(function() {
 		converter.fetch(url, function(data) {
 			layer = L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
-					layer.bindPopup(feature.properties.name);
+					layer.bindPopup(JSON.stringify(feature.properties));
 				}
 			});
 			self.hospitalLayer =  layer;
