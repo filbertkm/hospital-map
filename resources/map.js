@@ -12,10 +12,14 @@ $(document).ready(function() {
 
 	map.locate({setView: true, maxZoom: 16});
 
-	initLayerControl();
+	function geojsonLayer() {
+		converter = new op2geojson();
+		data = converter.geojson();
+		return L.geoJson(data);
+	}
 
 	function fetchLayers() {
-		self.hospitalLayer = L.tileLayer("http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;");
+		self.hospitalLayer = geojsonLayer();
 		self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
