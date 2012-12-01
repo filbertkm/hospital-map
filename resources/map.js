@@ -15,6 +15,9 @@ $(document).ready(function() {
 	 <% }); %> \
 	 </dl>');
 
+	// to filter them later
+	self.hospitalAttributes = [];
+	self.currentFilter = [];
 
 	fetchLayers();
 	var map = L.map( 'map', {
@@ -31,6 +34,7 @@ $(document).ready(function() {
 	}
 
 	map.on('hospitalsfetched', addHospitalLayer);
+	map.on('hospitalsfetched', initFilters);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
@@ -58,6 +62,15 @@ $(document).ready(function() {
 	function buildLayer(data) {
 		return L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
+					var isHierarchical = new RegExp('\:');
+					_.each(feature.properties, function(val, key) {
+						if (isHierarchical.exec(isHierarchical)) {
+							key = key.split(':')[1];
+							if (_.contains(self.hospitalAttributes), key) {
+								self.hospitalAttributes.push(key);
+							}
+						}
+					});
 					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
 				}
 		});
@@ -71,6 +84,41 @@ $(document).ready(function() {
 			self.hospitalLayer =  layer;
 			map.fireEvent('hospitalsfetched');
 		});
+	}
+
+	function initFilters() {
+		var FilterControl = L.Control.extend({
+		    options: {
+		        position: 'topright'
+		    },
+		    onAdd: function (map) {
+		        // create the control container with a particular class name
+		        var container = L.DomUtil.create('div', 'filter-box');
+		        return container;
+		    }
+		});
+		var template = _.template('<div><form> <% _.each(attributes, function (attr) { %> \
+			<input type="checkbox" name=<%=attr %> value=<%= attr %>> <%= attr %> \
+			<% }); %> \
+			</form></div>');
+		var t = template({ attributes: self.hospitalAttributes });
+
+		map.addControl(new FilterControl());
+		$('.filter-box').html(t);
+		_.each($('.filter-box input'), function(el) {
+			//first check them all
+			el.click();
+			$(el).click(checkedFilterBox);
+		});
+	}
+
+	function checkedFilterBox(event) {
+		_(self.currentFilter).without(event.currentTarget.value);
+		var prev = self.hospitalLayer;
+		// L.control.layers(null, {
+		// 	"Hospitals" : TODO qgitnew Layer
+		// }).addTo(map);
+		// var filteredHospitals = L.layer
 	}
 
 	function fetchLayers() {
@@ -92,15 +140,11 @@ $(document).ready(function() {
 		alert(e.message);
 	}
 
-	function renderHospitalIcon() {
-		var hospitalIcon = L.icon({
-			iconUrl: 'resources/img/hospital.png'
-		});
-		self.hospitalLayer.addTo(map);
-//		if (self.currentLocation) {
-//			L.marker([self.currentLocation.lat, self.currentLocation.lng], {icon: hospitalIcon})
-//				.addTo(self.hospitalLayer)
-//				.bindPopup('Hospital 1');
-//		}
-	}
+	// function renderHospitalIcon(feature, latlng) {
+	// 	var hospitalIcon = L.icon({
+	// 		iconUrl: 'resources/img/hospital.png'
+	// 	});
+	// 	debugger;
+	// 	L.marker(latlng, {icon: hospitalIcon}).addTo(map)
+	// }
 });
