@@ -1,1 +1,1 @@
-http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=restaurant](52.49214,13.39663,52.51377,13.44027);out;
+http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;
