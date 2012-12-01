@@ -4,6 +4,7 @@ $(document).ready(function() {
 
 	fetchLayers();
 	var map = L.map( 'map', {
+		zoom: 12,
 		layers: [self.tileLayer, self.hospitalLayer]
 	});
 
@@ -11,13 +12,19 @@ $(document).ready(function() {
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
-	map.locate({setView: true, maxZoom: 16});
+	map.locate({setView: true, maxZoom: 12});
 	initLayerControl();
 
 	function geojsonLayer() {
 		converter = new op2geojson();
 		data = converter.geojson();
-		return L.geoJson(data);
+		var style = {
+			"color": "#ff7800",
+			"weight" : 5,
+			"opacity" : 0.65
+		};
+		layer = L.geoJson(data, style);
+		return layer;
 	}
 
 	function fetchLayers() {
@@ -50,10 +57,11 @@ $(document).ready(function() {
 		var hospitalIcon = L.icon({
 			iconUrl: 'resources/img/hospital.png'
 		});
-		if (self.currentLocation) {
-			L.marker([self.currentLocation.lat, self.currentLocation.lng], {icon: hospitalIcon})
-				.addTo(self.hospitalLayer)
-				.bindPopup('Hospital 1');
-		}
+		self.hospitalLayer.addTo(map);
+//		if (self.currentLocation) {
+//			L.marker([self.currentLocation.lat, self.currentLocation.lng], {icon: hospitalIcon})
+//				.addTo(self.hospitalLayer)
+//				.bindPopup('Hospital 1');
+//		}
 	}
 });

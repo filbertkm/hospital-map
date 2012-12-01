@@ -21,7 +21,7 @@ op2geojson = function() {
 		point = {
 			"geometry" : {
 				"type" : "Point",
-				"coordinates" : [52.480732,13.3172386]
+				"coordinates" : [13.3172386,52.480732]
 			},
 			"type" : "Feature",
 			"properties" : { "name" : "Sankt Gertrauden-Krankenhaus" },
