@@ -2,6 +2,12 @@ $(document).ready(function() {
 
 	var self = this;
 
+	self.template = _.template('<dl> <% _.each(properties, function(val, key) { %>\
+	 <dt><%= key %> </dt>\
+	 <dd><%= val %> </dd>\
+	 <% }); %>\
+	 </dl>');
+
 	fetchLayers();
 	var map = L.map( 'map', {
 		zoom: 12,
@@ -37,7 +43,7 @@ $(document).ready(function() {
 			console.log(data);
 			layer = L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
-					layer.bindPopup(feature.properties);
+					layer.bindPopup(self.template({ properties: feature.properties }));
 				}
 			});
 			self.hospitalLayer.addData(data);
@@ -54,7 +60,7 @@ $(document).ready(function() {
 		converter.fetch(url, function(data) {
 			layer = L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
-					layer.bindPopup(JSON.stringify(feature.properties));
+					layer.bindPopup(self.template({ properties: feature.properties }));
 				}
 			});
 			self.hospitalLayer =  layer;
