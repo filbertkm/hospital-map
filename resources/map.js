@@ -12,6 +12,8 @@ $(document).ready(function() {
 		L.control.layers(null, {
 			"Hospitals" : self.hospitalLayer
 		}).addTo(map);
+		// display layer
+		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
 	$('body').bind('hospitalsfetched', addHospitalLayer);
