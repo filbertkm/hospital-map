@@ -2,7 +2,7 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.template = _.template('<dl> <% _.each(properties, function(val, key) { %> \
+	self.popupTemplate = _.template('<dl> <% _.each(properties, function(val, key) { %> \
 	 <% if (/\:/.exec(key)) { %> \
 	 	<dl> \
 	 		<dt><%= key.split(":")[1] %> </dt> \
@@ -14,6 +14,7 @@ $(document).ready(function() {
 	 <% } %> \
 	 <% }); %> \
 	 </dl>');
+
 
 	fetchLayers();
 	var map = L.map( 'map', {
@@ -47,30 +48,26 @@ $(document).ready(function() {
 		var url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](" + bbox + ");out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
-			console.log(data);
-			layer = L.geoJson(data, {
-				onEachFeature: function(feature, layer) {
-					debugger;
-					layer.bindPopup(self.template({ properties: feature.properties }));
-				}
-			});
+			layer = buildLayer(data)
 			self.hospitalLayer.addData(data);
 		});
-
-
 	})
 
 	map.locate({setView: true, maxZoom: 12});
+
+	function buildLayer(data) {
+		return L.geoJson(data, {
+				onEachFeature: function(feature, layer) {
+					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+				}
+		});
+	}
 
 	function geojsonLayer() {
         url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
-			layer = L.geoJson(data, {
-				onEachFeature: function(feature, layer) {
-					layer.bindPopup(self.template({ properties: feature.properties }));
-				}
-			});
+			layer = buildLayer(data);
 			self.hospitalLayer =  layer;
 			map.fireEvent('hospitalsfetched');
 		});
