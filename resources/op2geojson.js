@@ -21,13 +21,19 @@ op2geojson = function() {
 	};
 
 	instance.point = function(node) {
-		point = {
+		var name;
+		if ( typeof node.tags.name != 'undefined' ) {
+			name = node.tags.name;
+		} else {
+			name = '';
+		}
+		var point = {
 			"type" : "Feature",
 			"geometry" : {
 				"type" : "Point",
 				"coordinates" : [node.lon,node.lat]
 			},
-			"properties" : { "name" : "Sankt Gertrauden-Krankenhaus" },
+			"properties" : { "name" : name },
 		};
 		return point;
 	}
