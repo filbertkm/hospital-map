@@ -21,6 +21,10 @@ $(document).ready(function() {
 	map.on('locationerror', onLocationError);
 
 	map.on('moveend', function(e) {
+		var zoom = map.getZoom();
+		if (zoom < 10) {
+			return;
+		}
 		if (!self.hospitalLayer)
 			return;
 		var bounds = map.getBounds();
