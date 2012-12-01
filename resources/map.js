@@ -16,22 +16,24 @@ $(document).ready(function() {
 	initLayerControl();
 
 	function geojsonLayer() {
-		var converter = new op2geojson();
-		var data = converter.geojson();
-		var style = {
-			color: "red",
-			weight : 50,
-			opacity : 0.65
-		};
-		var layer = L.geoJson(data, {
-			style: function(feature) {
-				return style;
-			},
-			onEachFeature: function(feature, layer) {
-				layer.bindPopup(feature.properties.name);
-			}
+        url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
+		converter = new op2geojson();
+		converter.fetch(url, function(data) {
+			var style = {
+				"color": "red",
+				"weight" : 50,
+				"opacity" : 0.65
+			};
+			layer = L.geoJson(data, {
+				style: function(feature) {
+					return style;
+				},
+				onEachFeature: function(feature, layer) {
+					layer.bindPopup(feature.properties.name);
+				}
+			});
+			return layer;
 		});
-		return layer;
 	}
 
 	function fetchLayers() {
