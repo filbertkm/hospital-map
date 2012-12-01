@@ -9,7 +9,7 @@ $(document).ready(function() {
 
 	function onLocationFound(e) {
 		var radius = e.accuracy / 2;
-		L.marker(e.latlng).addTo(map);
+		L.marker(e.latlng).addTo(map)
 		.bindPopup("You are within " + radius + " meters from this point").openPopup();
 	}
 
