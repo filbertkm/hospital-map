@@ -4,9 +4,8 @@ $(document).ready(function() {
 
 	fetchLayers();
 	var map = L.map( 'map', {
-		minZoom: 10,
 		zoom: 12,
-		layers: [self.tileLayer]
+		layers: [self.tileLayer],
 	});
 
 	function addHospitalLayer(){
