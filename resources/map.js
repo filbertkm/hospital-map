@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
 	var self = this;
 
 	fetchLayers();
@@ -6,11 +7,12 @@ $(document).ready(function() {
 		layers: [self.tileLayer, self.hospitalLayer]
 	});
 
-	// $('body').bind('hospitalsfetched', renderHospitalIcon);
+	$('body').bind('hospitalsfetched', renderHospitalIcon);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
 	map.locate({setView: true, maxZoom: 16});
+	initLayerControl();
 
 	function geojsonLayer() {
 		converter = new op2geojson();
@@ -46,11 +48,12 @@ $(document).ready(function() {
 
 	function renderHospitalIcon() {
 		var hospitalIcon = L.icon({
-			iconUrl: 'img/hospital.png'
+			iconUrl: 'resources/img/hospital.png'
 		});
 		if (self.currentLocation) {
-			debugger;
-			L.marker([self.location.lat, self.location.lng], {icon: hospitalIcon}).addTo(map);
+			L.marker([self.currentLocation.lat, self.currentLocation.lng], {icon: hospitalIcon})
+				.addTo(self.hospitalLayer)
+				.bindPopup('Hospital 1');
 		}
 	}
 });
