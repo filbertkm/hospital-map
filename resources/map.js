@@ -20,21 +20,34 @@ $(document).ready(function() {
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
+	map.on('moveend', function(e) {
+		if (!self.hospitalLayer)
+			return;
+		var bounds = map.getBounds();
+		var sw = bounds.getSouthWest();
+		var ne = bounds.getNorthEast();
+		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
+		var url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](" + bbox + ");out;";
+		converter = new op2geojson();
+		converter.fetch(url, function(data) {
+			layer = L.geoJson(data, {
+				onEachFeature: function(feature, layer) {
+					layer.bindPopup(feature.properties.name);
+				}
+			});
+			self.hospitalLayer.addData(data);
+		});
+
+
+	})
+
 	map.locate({setView: true, maxZoom: 12});
 
 	function geojsonLayer() {
         url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
-			var style = {
-				"color": "red",
-				"weight" : 50,
-				"opacity" : 0.65
-			};
 			layer = L.geoJson(data, {
-				style: function(feature) {
-					return style;
-				},
 				onEachFeature: function(feature, layer) {
 					layer.bindPopup(feature.properties.name);
 				}
