@@ -16,14 +16,21 @@ $(document).ready(function() {
 	initLayerControl();
 
 	function geojsonLayer() {
-		converter = new op2geojson();
-		data = converter.geojson();
+		var converter = new op2geojson();
+		var data = converter.geojson();
 		var style = {
-			"color": "#ff7800",
-			"weight" : 5,
-			"opacity" : 0.65
+			color: "red",
+			weight : 50,
+			opacity : 0.65
 		};
-		layer = L.geoJson(data, style);
+		var layer = L.geoJson(data, {
+			style: function(feature) {
+				return style;
+			},
+			onEachFeature: function(feature, layer) {
+				layer.bindPopup(feature.properties.name);
+			}
+		});
 		return layer;
 	}
 
@@ -33,6 +40,12 @@ $(document).ready(function() {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
 		});
+		// L.geoJson(self.hospitalLayer, {
+		// 	pointToLayer: function(feature, latlng) {
+		// 		debugger;
+		// 		L.circleMarker(latlng);
+		// 	}
+		// })
 	}
 
 	function initLayerControl() {
@@ -46,7 +59,6 @@ $(document).ready(function() {
 		var radius = e.accuracy / 2;
 		L.marker(e.latlng).addTo(map)
 		.bindPopup("You are within " + radius + " meters from this point").openPopup();
-		$('body').trigger('hospitalsfetched');
 	}
 
 	function onLocationError(e) {
