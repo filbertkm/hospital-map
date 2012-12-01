@@ -2,19 +2,17 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.template = _.template('<dl> <% _.each(properties, function(val, key) { %>\
+	self.template = _.template('<dl> <% _.each(properties, function(val, key) { %> \
 	 <% if (/\:/.exec(key)) { %> \
 	 	<dl> \
-	 		<% console.log(key.split(":")); %>\
-	 		<% console.log(val); %>\
 	 		<dt><%= key.split(":")[1] %> </dt> \
 			<dd><%= val %> </dd> \
 		</dl> \
 	 <% } else {%> \
-	 <dt><%= key %> </dt>\
-	 <dd><%= val %> </dd>\
+	 <dt><%= key %> </dt> \
+	 <dd><%= val %> </dd> \
 	 <% } %> \
-	 <% }); %>\
+	 <% }); %> \
 	 </dl>');
 
 	fetchLayers();
@@ -31,7 +29,7 @@ $(document).ready(function() {
 		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
-	$('body').bind('hospitalsfetched', addHospitalLayer);
+	map.on('hospitalsfetched', addHospitalLayer);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
@@ -74,7 +72,7 @@ $(document).ready(function() {
 				}
 			});
 			self.hospitalLayer =  layer;
-			$('body').trigger('hospitalsfetched');
+			map.fireEvent('hospitalsfetched');
 		});
 	}
 
