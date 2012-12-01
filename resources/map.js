@@ -5,15 +5,20 @@ $(document).ready(function() {
 	fetchLayers();
 	var map = L.map( 'map', {
 		zoom: 12,
-		layers: [self.tileLayer, self.hospitalLayer]
+		layers: [self.tileLayer]
 	});
 
-	$('body').bind('hospitalsfetched', renderHospitalIcon);
+	function addHospitalLayer(){
+		L.control.layers(null, {
+			"Hospitals" : self.hospitalLayer
+		}).addTo(map);
+	}
+
+	$('body').bind('hospitalsfetched', addHospitalLayer);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
 	map.locate({setView: true, maxZoom: 12});
-	initLayerControl();
 
 	function geojsonLayer() {
         url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
@@ -32,12 +37,13 @@ $(document).ready(function() {
 					layer.bindPopup(feature.properties.name);
 				}
 			});
-			return layer;
+			self.hospitalLayer =  layer;
+			$('body').trigger('hospitalsfetched');
 		});
 	}
 
 	function fetchLayers() {
-		self.hospitalLayer = geojsonLayer();
+		geojsonLayer();
 		self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -48,12 +54,6 @@ $(document).ready(function() {
 		// 		L.circleMarker(latlng);
 		// 	}
 		// })
-	}
-
-	function initLayerControl() {
-		L.control.layers(null, {
-			"Hospitals" : self.hospitalLayer
-		}).addTo(map);
 	}
 
 	function onLocationFound(e) {
