@@ -3,8 +3,17 @@ $(document).ready(function() {
 	var self = this;
 
 	self.template = _.template('<dl> <% _.each(properties, function(val, key) { %>\
+	 <% if (/\:/.exec(key)) { %> \
+	 	<dl> \
+	 		<% console.log(key.split(":")); %>\
+	 		<% console.log(val); %>\
+	 		<dt><%= key.split(":")[1] %> </dt> \
+			<dd><%= val %> </dd> \
+		</dl> \
+	 <% } else {%> \
 	 <dt><%= key %> </dt>\
 	 <dd><%= val %> </dd>\
+	 <% } %> \
 	 <% }); %>\
 	 </dl>');
 
@@ -43,6 +52,7 @@ $(document).ready(function() {
 			console.log(data);
 			layer = L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
+					debugger;
 					layer.bindPopup(self.template({ properties: feature.properties }));
 				}
 			});
