@@ -2,18 +2,21 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.popupTemplate = _.template('<dl> <% _.each(properties, function(val, key) { %> \
+	self.popupTemplate = _.template('<table><tr><th>Key</th><th>Value</th></tr>\
+     <% _.each(properties, function(val, key) { %> \
 	 <% if (/\:/.exec(key)) { %> \
-	 	<dl> \
-	 		<dt><%= key.split(":")[1] %> </dt> \
-			<dd><%= val %> </dd> \
-		</dl> \
+	 	<tr> \
+	 		<td><%= key.split(":")[1] %> </td> \
+			<td><%= val %> </td> \
+		</tr> \
 	 <% } else {%> \
-	 <dt><%= key %> </dt> \
-	 <dd><%= val %> </dd> \
+     <tr>\
+	    <td><%= key %> </td> \
+	    <td><%= val %> </td> \
+     </tr>\
 	 <% } %> \
 	 <% }); %> \
-	 </dl>');
+	 </table>');
 
 	// to filter them later
 	self.hospitalAttributes = [];
