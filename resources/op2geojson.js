@@ -5,8 +5,8 @@ op2geojson = function() {
 	var instance = {},
 		geojson;
 
-	instance.fetch = function(url, callback) {
-    	$.getJSON(url, { format: "json" },
+	instance.fetch = function(url, data, callback) {
+    	$.post(url, data,
 			function(data) {
 				// List all of the returned nodes
 				var nodes = [];
@@ -28,7 +28,7 @@ op2geojson = function() {
 				geojson = instance.featureCollection(features);
 				callback(geojson);
 			}
-		);
+		, "json");;
 	};
 
 	instance.point = function(node) {
