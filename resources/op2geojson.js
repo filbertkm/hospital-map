@@ -19,7 +19,8 @@ op2geojson = function() {
 				// Add nodes and ways to the layer
 				var features = [];
 				$.each(data.elements, function(i, item) {
-					if( item.type === 'node' && item.tags != null ) {
+					if( item.type === 'node' && item.tags != undefined
+							&& item.tags['amenity'] != undefined) {
 						features.push( instance.point(item) );
 					} else if (item.type === 'way') {
 						features.push( instance.lineString(item, nodes) );
