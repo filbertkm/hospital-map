@@ -56,10 +56,11 @@ $(document).ready(function() {
 		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
-	function createQueryURL(bbox) {
-		return "http://overpass-api.de/api/interpreter?" +
-				"data=[out:json];(node[amenity=hospital](" + bbox +
-				");way[amenity=hospital]("+ bbox +");node(w););out;";
+	function createQueryData(bbox) {
+		// TODO: Use POST instead of GET, for neatness
+		return "data=[out:json];" +
+				"(node[amenity=hospital]("+ bbox
+				+");way[amenity=hospital]("+ bbox +");node(w););out;";
 	}
 
 	map.on('hospitalsfetched', addHospitalLayer);
@@ -77,9 +78,9 @@ $(document).ready(function() {
 		var sw = bounds.getSouthWest();
 		var ne = bounds.getNorthEast();
 		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
-		var url = createQueryURL(bbox);
+		var data = createQueryData(bbox);
 		converter = new op2geojson();
-		converter.fetch(url, function(data) {
+		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 			self.hospitals = data;
 			layer = buildLayer(data)
 			self.hospitalLayer.addData(data);
@@ -127,9 +128,9 @@ $(document).ready(function() {
 	}
 
 	function geojsonLayer() {
-        url = createQueryURL(52.34,13.3,52.52,13.6);
+        data = createQueryData([52.34,13.3,52.52,13.6]);
 		converter = new op2geojson();
-		converter.fetch(url, function(data) {
+		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 			self.hospitals = data;
 			layer = buildLayer(data);
 			self.hospitalLayer =  layer;
