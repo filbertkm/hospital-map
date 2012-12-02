@@ -56,8 +56,10 @@ $(document).ready(function() {
 	function createQueryData(bbox) {
 		// TODO: Use POST instead of GET, for neatness
 		return "data=[out:json];" +
-				"(node[amenity=hospital]("+ bbox
-				+");way[amenity=hospital]("+ bbox +");node(w););out;";
+				"(node[amenity=hospital]("+ bbox +");way[amenity=hospital]("+ bbox +");node(w););" +
+				"(node[amenity=doctors]("+ bbox +");way[amenity=doctors]("+ bbox +");node(w););" +
+				"(node[amenity=dentist]("+ bbox +");way[amenity=dentist]("+ bbox +");node(w););" +
+				"out;";
 	}
 
 	map.on('hospitalsfetched', addHospitalLayer);
