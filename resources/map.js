@@ -34,6 +34,12 @@ $(document).ready(function() {
 		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
+	function createQueryURL(bbox) {
+		return "http://overpass-api.de/api/interpreter?" +
+				"data=[out:json];(node[amenity=hospital](" + bbox +
+				");way[amenity=hospital]("+ bbox +");node(w););out;";
+	}
+
 	map.on('hospitalsfetched', addHospitalLayer);
 	map.on('hospitalsfetched', initFilters);
 	map.on('locationfound', onLocationFound);
@@ -50,7 +56,7 @@ $(document).ready(function() {
 		var sw = bounds.getSouthWest();
 		var ne = bounds.getNorthEast();
 		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
-		var url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](" + bbox + ");out;";
+		var url = createQueryURL(bbox);
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
 			self.hospitals = data;
@@ -85,7 +91,7 @@ $(document).ready(function() {
 	}
 
 	function geojsonLayer() {
-        url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
+        url = createQueryURL(52.34,13.3,52.52,13.6);
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
 			self.hospitals = data;
