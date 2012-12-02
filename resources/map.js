@@ -27,15 +27,31 @@ $(document).ready(function() {
 	GlobalMap = map;
 
 	function addHospitalLayer(){
+		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
+			return L.geoJson(self.hospitals, {
+					onEachFeature: function(feature, layer) {
+						layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+					},
+					filter: function(feature, layer) {
+						return _.contains(_.keys(feature.properties), attr);
+					}
+			});
+		});
+
 		self.layers = L.control.layers(null, {
 			"Hospitals" : self.hospitalLayer
 		}).addTo(map);
+
+		debugger;
+		_.each(filteredLayers, function(layer, i) {
+			self.layers.addOverlay(layer, self.hospitalAttributes[i]);
+		});
+
 		// display layer
 		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
 	map.on('hospitalsfetched', addHospitalLayer);
-	map.on('hospitalsfetched', initFilters);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
@@ -100,41 +116,6 @@ $(document).ready(function() {
 		});
 	}
 
-	function initFilters() {
-		var FilterControl = L.Control.extend({
-		    options: {
-		        position: 'topright'
-		    },
-		    onAdd: function (map) {
-		        // create the control container with a particular class name
-		        var container = L.DomUtil.create('div', 'filter-box');
-		        return container;
-		    }
-		});
-		var template = _.template('<div><form> <% _.each(attributes, function (attr) { %> \
-			<label><input type="checkbox" name=<%=attr %> value=<%= attr %>> <%= attr %> </label> \
-			<% }); %> \
-			</form></div>');
-		var t = template({ attributes: self.hospitalAttributes });
-
-		map.addControl(new FilterControl());
-		$('.filter-box').html(t);
-		_.each($('.filter-box input'), function(el) {
-			//first check them all
-			// el.click();
-			// attach click handler
-			$(el).click(checkedFilterBox);
-		});
-	}
-
-	function checkedFilterBox(event) {
-		var prev = self.hospitalLayer;
-		// L.control.layers(null, {
-		// 	"Hospitals" : TODO qgitnew Layer
-		// }).addTo(map);
-		// var filteredHospitals = L.layer
-	}
-
 	function fetchLayers() {
 		geojsonLayer();
 		self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
@@ -153,12 +134,4 @@ $(document).ready(function() {
 	function onLocationError(e) {
 		alert(e.message);
 	}
-
-	// function renderHospitalIcon(feature, latlng) {
-	// 	var hospitalIcon = L.icon({
-	// 		iconUrl: 'resources/img/hospital.png'
-	// 	});
-	// 	debugger;
-	// 	L.marker(latlng, {icon: hospitalIcon}).addTo(map)
-	// }
 });
