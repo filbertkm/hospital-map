@@ -2,18 +2,21 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.popupTemplate = _.template('<dl> <% _.each(properties, function(val, key) { %> \
+	self.popupTemplate = _.template('<table><tr><th>Key</th><th>Value</th></tr>\
+     <% _.each(properties, function(val, key) { %> \
 	 <% if (/\:/.exec(key)) { %> \
-	 	<dl> \
-	 		<dt><%= key.split(":")[1] %> </dt> \
-			<dd><%= val %> </dd> \
-		</dl> \
+	 	<tr> \
+	 		<td><%= key.split(":")[1] %> </td> \
+			<td><%= val %> </td> \
+		</tr> \
 	 <% } else {%> \
-	 <dt><%= key %> </dt> \
-	 <dd><%= val %> </dd> \
+     <tr>\
+	    <td><%= key %> </td> \
+	    <td><%= val %> </td> \
+     </tr>\
 	 <% } %> \
 	 <% }); %> \
-	 </dl>');
+	 </table>');
 
 	// to filter them later
 	self.hospitalAttributes = [];
@@ -52,10 +55,13 @@ $(document).ready(function() {
 		$('.leaflet-control-layers-selector').first().trigger('click')
 	}
 
-	function createQueryURL(bbox) {
-		return "http://overpass-api.de/api/interpreter?" +
-				"data=[out:json];(node[amenity=hospital](" + bbox +
-				");way[amenity=hospital]("+ bbox +");node(w););out;";
+	function createQueryData(bbox) {
+		// TODO: Use POST instead of GET, for neatness
+		return "data=[out:json];(" +
+				"(node[amenity=hospital]("+ bbox +");way[amenity=hospital]("+ bbox +");node(w););" +
+				"(node[amenity=doctors]("+ bbox +");way[amenity=doctors]("+ bbox +");node(w););" +
+				"(node[amenity=dentist]("+ bbox +");way[amenity=dentist]("+ bbox +");node(w););" +
+				");out;";
 	}
 
 	map.on('hospitalsfetched', addHospitalLayer);
@@ -73,9 +79,9 @@ $(document).ready(function() {
 		var sw = bounds.getSouthWest();
 		var ne = bounds.getNorthEast();
 		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
-		var url = createQueryURL(bbox);
+		var data = createQueryData(bbox);
 		converter = new op2geojson();
-		converter.fetch(url, function(data) {
+		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 			self.hospitals = data;
 			layer = buildLayer(data)
 			self.hospitalLayer.addData(data);
@@ -122,9 +128,9 @@ $(document).ready(function() {
 	}
 
 	function geojsonLayer() {
-        url = createQueryURL(52.34,13.3,52.52,13.6);
+        data = createQueryData([52.34,13.3,52.52,13.6]);
 		converter = new op2geojson();
-		converter.fetch(url, function(data) {
+		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 			self.hospitals = data;
 			layer = buildLayer(data);
 			self.hospitalLayer =  layer;
