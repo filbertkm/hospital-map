@@ -29,12 +29,15 @@ $(document).ready(function() {
 	function addHospitalLayer(){
 		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
 			return L.geoJson(self.hospitals, {
-					onEachFeature: function(feature, layer) {
-						layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
-					},
-					filter: function(feature, layer) {
-						return _.contains(_.keys(feature.properties), attr);
-					}
+				// style: function (feature) {
+    			// return {color: 'red'};
+    			// },
+				onEachFeature: function(feature, layer) {
+					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+				},
+				filter: function(feature, layer) {
+					return _.contains(_.keys(feature.properties), attr);
+				}
 			});
 		});
 
@@ -42,7 +45,6 @@ $(document).ready(function() {
 			"Hospitals" : self.hospitalLayer
 		}).addTo(map);
 
-		debugger;
 		_.each(filteredLayers, function(layer, i) {
 			self.layers.addOverlay(layer, self.hospitalAttributes[i]);
 		});
