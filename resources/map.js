@@ -24,6 +24,7 @@ $(document).ready(function() {
 		zoom: 12,
 		layers: [self.tileLayer],
 	});
+	GlobalMap = map;
 
 	function addHospitalLayer(){
 		L.control.layers(null, {
@@ -52,6 +53,7 @@ $(document).ready(function() {
 		var url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](" + bbox + ");out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
+			self.hospitals = data;
 			layer = buildLayer(data)
 			self.hospitalLayer.addData(data);
 		});
@@ -62,24 +64,31 @@ $(document).ready(function() {
 	function buildLayer(data) {
 		return L.geoJson(data, {
 				onEachFeature: function(feature, layer) {
-					var isHierarchical = new RegExp('\:');
-					_.each(feature.properties, function(val, key) {
-						if (isHierarchical.exec(isHierarchical)) {
-							key = key.split(':')[1];
-							if (_.contains(self.hospitalAttributes), key) {
-								self.hospitalAttributes.push(key);
-							}
-						}
-					});
+					storeAllAttributeKeys(feature);
 					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
 				}
 		});
+	}
+
+	function storeAllAttributeKeys(feature) {
+		var isHierarchical = new RegExp('\:');
+		var keys = _.keys(feature.properties);
+		_.each(feature.properties, function(val, key) {
+			if (isHierarchical.exec(key)) {
+				key = key.split(':')[1];
+			}
+			if (!_.contains(self.hospitalAttributes, key)) {
+				self.hospitalAttributes.push(key);
+			}
+		});
+		self.hospitalAttributes;
 	}
 
 	function geojsonLayer() {
         url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
 		converter = new op2geojson();
 		converter.fetch(url, function(data) {
+			self.hospitals = data;
 			layer = buildLayer(data);
 			self.hospitalLayer =  layer;
 			map.fireEvent('hospitalsfetched');
@@ -98,7 +107,7 @@ $(document).ready(function() {
 		    }
 		});
 		var template = _.template('<div><form> <% _.each(attributes, function (attr) { %> \
-			<input type="checkbox" name=<%=attr %> value=<%= attr %>> <%= attr %> \
+			<label><input type="checkbox" name=<%=attr %> value=<%= attr %>> <%= attr %> </label> \
 			<% }); %> \
 			</form></div>');
 		var t = template({ attributes: self.hospitalAttributes });
@@ -108,7 +117,9 @@ $(document).ready(function() {
 		_.each($('.filter-box input'), function(el) {
 			//first check them all
 			el.click();
+			// attach click handler
 			$(el).click(checkedFilterBox);
+			$(el).dblclick(dontZoom);
 		});
 	}
 
