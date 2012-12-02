@@ -27,7 +27,7 @@ $(document).ready(function() {
 	GlobalMap = map;
 
 	function addHospitalLayer(){
-		L.control.layers(null, {
+		self.layers = L.control.layers(null, {
 			"Hospitals" : self.hospitalLayer
 		}).addTo(map);
 		// display layer
@@ -63,21 +63,26 @@ $(document).ready(function() {
 
 	function buildLayer(data) {
 		return L.geoJson(data, {
-				onEachFeature: function(feature, layer) {
-					storeAllAttributeKeys(feature);
-					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
-				}
+			onEachFeature: function(feature, layer) {
+				storeBooleanAttributeKeys(feature);
+				layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+			},
 		});
 	}
 
-	function storeAllAttributeKeys(feature) {
+	function storeBooleanAttributeKeys(feature) {
 		var isHierarchical = new RegExp('\:');
+
+		function isBoolean (val) {
+			return val === 'yes' || val === 'no';
+		}
+
 		var keys = _.keys(feature.properties);
 		_.each(feature.properties, function(val, key) {
 			if (isHierarchical.exec(key)) {
 				key = key.split(':')[1];
 			}
-			if (!_.contains(self.hospitalAttributes, key)) {
+			if (!_.contains(self.hospitalAttributes, key) && isBoolean(val)) {
 				self.hospitalAttributes.push(key);
 			}
 		});
@@ -116,15 +121,13 @@ $(document).ready(function() {
 		$('.filter-box').html(t);
 		_.each($('.filter-box input'), function(el) {
 			//first check them all
-			el.click();
+			// el.click();
 			// attach click handler
 			$(el).click(checkedFilterBox);
-			$(el).dblclick(dontZoom);
 		});
 	}
 
 	function checkedFilterBox(event) {
-		_(self.currentFilter).without(event.currentTarget.value);
 		var prev = self.hospitalLayer;
 		// L.control.layers(null, {
 		// 	"Hospitals" : TODO qgitnew Layer
