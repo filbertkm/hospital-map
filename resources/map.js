@@ -85,6 +85,16 @@ $(document).ready(function() {
 
 	map.locate({setView: true, maxZoom: 12});
 
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+
+        div.innerHTML += '<img href="resources/img/hospital.png"> Hospital<br>';
+
+        return div;
+    };
+    legend.addTo(map);
+
 	function buildLayer(data) {
 		return L.geoJson(data, {
 			onEachFeature: function(feature, layer) {
