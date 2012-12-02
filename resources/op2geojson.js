@@ -5,8 +5,8 @@ op2geojson = function() {
 	var instance = {},
 		geojson;
 
-	instance.fetch = function(url, callback) {
-    	$.getJSON(url, { format: "json" },
+	instance.fetch = function(url, data, callback) {
+    	$.post(url, data,
 			function(data) {
 				// List all of the returned nodes
 				var nodes = [];
@@ -19,7 +19,8 @@ op2geojson = function() {
 				// Add nodes and ways to the layer
 				var features = [];
 				$.each(data.elements, function(i, item) {
-					if( item.type === 'node' && item.tags != null ) {
+					if( item.type === 'node' && item.tags != undefined
+							&& item.tags['amenity'] != undefined) {
 						features.push( instance.point(item) );
 					} else if (item.type === 'way') {
 						features.push( instance.lineString(item, nodes) );
@@ -28,7 +29,7 @@ op2geojson = function() {
 				geojson = instance.featureCollection(features);
 				callback(geojson);
 			}
-		);
+		, "json");;
 	};
 
 	instance.point = function(node) {
