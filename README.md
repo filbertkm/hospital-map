@@ -3,15 +3,15 @@ HealthMap
 
 # Summary 
 
-Hospital Map shows halthcare institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them.
+[Health Map](http://jups.pegasus.uberspace.de/healthmap/) shows health care institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them. It targets the problem [Granular Health Map](http://www.rhok.org/problems/granular-health-map).
 
 ![See all health care institutions](http://jups.pegasus.uberspace.de/dropbox/all-health-care.jpg)
 
-![Filter to see only wheelchair-friendly health care institutions with emergency service"](http://jups.pegasus.uberspace.de/dropbox/wheelchair-emergency.jpg)
+![Filter to see only wheelchair-friendly health care institutions with emergency service](http://jups.pegasus.uberspace.de/dropbox/wheelchair-emergency.jpg)
 
 # What we accomplished during the RHoK December 2012
 
-Creating a JavaScript only application which fetches the http://overpass-api.de/ API (Open Street Map) for health care institutions. The app renders them on a map using http://leafletjs.com/ which offers mobile friendly maps with layers and controls.
+Creating a JavaScript only application which fetches the [Overpass API](http://overpass-api.de/) (Open Street Map) for health care institutions. The app renders them on a map using [Leaflet](http://leafletjs.com/) which offers mobile friendly maps with layers and controls.
 
 # Traction
 
@@ -23,7 +23,7 @@ Emergency response teams can use a specialized map that works offline (thanks to
 
 # Installation
 
-The map doesn't need a server. Just open index.html in a web browser.
+The map doesn't need a server. Just open index.html in a web browser or visit http://jups.pegasus.uberspace.de/healthmap/
 
 # Next steps aka TODO
 
