@@ -44,7 +44,6 @@ $(document).ready(function() {
 		self.layers = L.control.layers(null, {
 			"Hospitals" : self.hospitalLayer
 		}).addTo(map);
-
 		_.each(filteredLayers, function(layer, i) {
 			self.layers.addOverlay(layer, self.hospitalAttributes[i]);
 		});
@@ -116,11 +115,10 @@ $(document).ready(function() {
 			if (isHierarchical.exec(key)) {
 				key = key.split(':')[1];
 			}
-			if (!_.contains(self.hospitalAttributes, key) && isBoolean(val)) {
+			if ((!_.contains(self.hospitalAttributes, key)) && isBoolean(val)) {
 				self.hospitalAttributes.push(key);
 			}
 		});
-		self.hospitalAttributes;
 	}
 
 	function geojsonLayer() {
