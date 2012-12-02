@@ -28,6 +28,8 @@ $(document).ready(function() {
 		layers: [self.tileLayer],
 	});
 	GlobalMap = map;
+	
+	L.control.locate().addTo(map);
 
 	function addHospitalLayer(){
 		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
