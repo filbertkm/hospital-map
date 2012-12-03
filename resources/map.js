@@ -35,6 +35,8 @@ $(document).ready(function() {
 	});
 	GlobalMap = map;
 
+	L.control.locate().addTo(map);
+
 	function createQueryData(bbox) {
 		// TODO: Use POST instead of GET, for neatness
 		return "data=[out:json];(" +
@@ -134,11 +136,10 @@ $(document).ready(function() {
 			if (isHierarchical.exec(key)) {
 				key = key.split(':')[1];
 			}
-			if (!_.contains(self.hospitalAttributes, key) && isBoolean(val)) {
+			if ((!_.contains(self.hospitalAttributes, key)) && isBoolean(val)) {
 				self.hospitalAttributes.push(key);
 			}
 		});
-		self.hospitalAttributes;
 	}
 
 	function onLocationFound(e) {
