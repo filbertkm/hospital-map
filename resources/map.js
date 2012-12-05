@@ -22,7 +22,13 @@ $(document).ready(function() {
 	self.hospitalAttributes = [];
 	self.currentFilter = [];
 
-	fetchLayers();
+	self.hospitals = null;
+
+	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+	});
+
 	var map = L.map( 'map', {
 		zoom: 12,
 		layers: [self.tileLayer],
@@ -30,32 +36,6 @@ $(document).ready(function() {
 	GlobalMap = map;
 	
 	L.control.locate().addTo(map);
-
-	function addHospitalLayer(){
-		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
-			return L.geoJson(self.hospitals, {
-				// style: function (feature) {
-    			// return {color: 'red'};
-    			// },
-				onEachFeature: function(feature, layer) {
-					layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
-				},
-				filter: function(feature, layer) {
-					return _.contains(_.keys(feature.properties), attr);
-				}
-			});
-		});
-
-		self.layers = L.control.layers(null, {
-			"Hospitals" : self.hospitalLayer
-		}).addTo(map);
-		_.each(filteredLayers, function(layer, i) {
-			self.layers.addOverlay(layer, self.hospitalAttributes[i]);
-		});
-
-		// display layer
-		$('.leaflet-control-layers-selector').first().trigger('click')
-	}
 
 	function createQueryData(bbox) {
 		// TODO: Use POST instead of GET, for neatness
@@ -66,7 +46,6 @@ $(document).ready(function() {
 				");out;";
 	}
 
-	map.on('hospitalsfetched', addHospitalLayer);
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
 
@@ -75,8 +54,7 @@ $(document).ready(function() {
 		if (zoom < 10) {
 			return;
 		}
-		if (!self.hospitalLayer)
-			return;
+
 		var bounds = map.getBounds();
 		var sw = bounds.getSouthWest();
 		var ne = bounds.getNorthEast();
@@ -85,8 +63,36 @@ $(document).ready(function() {
 		converter = new op2geojson();
 		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 			self.hospitals = data;
-			layer = buildLayer(data)
-			self.hospitalLayer.addData(data);
+            self.hospitalLayer = buildLayer(data);
+
+    		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
+	        	return L.geoJson(self.hospitals, {
+                    style: function(feature) {
+                        return {color: 'red'};
+                    },
+    			    onEachFeature: function(feature, layer) {
+				        layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+			        },
+			        filter: function(feature, layer) {
+				        return _.contains(_.keys(feature.properties), attr);
+			        }
+		        });
+    	    });
+
+            if (self.layers) {
+                self.layers.clearLayers();
+            }
+
+	        self.layers = L.control.layers(null, {
+	    	    "Hospitals" : self.hospitalLayer
+	      	}).addTo(map);
+
+	        _.each(filteredLayers, function(layer, i) {
+		        self.layers.addOverlay(layer, self.hospitalAttributes[i]);
+	    	});
+
+	   	    // display layer
+	        $('.leaflet-control-layers-selector').first().trigger('click')
 		});
 	})
 
@@ -104,6 +110,13 @@ $(document).ready(function() {
 
 	function buildLayer(data) {
 		return L.geoJson(data, {
+            style: function(feature) {
+                if (feature.properties['amenity'] === 'hospital') {
+                    return {color: 'red'};
+                } else {
+                    return {color: 'blue'};
+                }
+            },
 			onEachFeature: function(feature, layer) {
 				storeBooleanAttributeKeys(feature);
 				layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
@@ -127,25 +140,7 @@ $(document).ready(function() {
 				self.hospitalAttributes.push(key);
 			}
 		});
-	}
-
-	function geojsonLayer() {
-        data = createQueryData([52.34,13.3,52.52,13.6]);
-		converter = new op2geojson();
-		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
-			self.hospitals = data;
-			layer = buildLayer(data);
-			self.hospitalLayer =  layer;
-			map.fireEvent('hospitalsfetched');
-		});
-	}
-
-	function fetchLayers() {
-		geojsonLayer();
-		self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
-			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-		});
+		self.hospitalAttributes;
 	}
 
 	function onLocationFound(e) {
