@@ -3,7 +3,7 @@ HealthMap
 
 # Summary 
 
-[Health Map](http://jups.pegasus.uberspace.de/healthmap/) shows health care institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them. It targets the problem [Granular Health Map](http://www.rhok.org/problems/granular-health-map).
+[Health Map](http://hospital-map.github.com/hospital-map) shows health care institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them. It targets the problem [Granular Health Map](http://www.rhok.org/problems/granular-health-map).
 
 ![See all health care institutions](http://jups.pegasus.uberspace.de/dropbox/all-health-care.jpg)
 
@@ -23,7 +23,7 @@ Emergency response teams can use a specialized map that works offline (thanks to
 
 # Installation
 
-The map doesn't need a server. Just open index.html in a web browser or visit http://jups.pegasus.uberspace.de/healthmap/
+The map doesn't need a server. Just open index.html in a web browser or visit http://hospital-map.github.com/hospital-map
 
 # Next steps aka TODO
 
