@@ -18,12 +18,6 @@ $(document).ready(function() {
 	 <% }); %> \
 	 </table>');
 
-	// to filter them later
-	self.hospitalAttributes = [];
-	self.currentFilter = [];
-
-	self.hospitals = null;
-
 	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
 		maxZoom: 18,
 		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -32,13 +26,19 @@ $(document).ready(function() {
 	var map = L.map( 'map', {
 		zoom: 12,
 		layers: [self.tileLayer],
-	});
+	}).setView([51.505, -0.09], 13);
+    // TODO: Not sure why the above call to setView is needed
 	GlobalMap = map;
+
+	self.amenities = ["hospital", "doctors", "dentist"];
+    // This contains the layers for each of the above amenities
+    self.amenityLayers = {};
+
+	self.layersControl = L.control.layers().addTo(map);
 
 	L.control.locate().addTo(map);
 
 	function createQueryData(bbox) {
-		// TODO: Use POST instead of GET, for neatness
 		return "data=[out:json];(" +
 				"(node[amenity=hospital]("+ bbox +");way[amenity=hospital]("+ bbox +");node(w););" +
 				"(node[amenity=doctors]("+ bbox +");way[amenity=doctors]("+ bbox +");node(w););" +
@@ -46,8 +46,15 @@ $(document).ready(function() {
 				");out;";
 	}
 
-	map.on('locationfound', onLocationFound);
-	map.on('locationerror', onLocationError);
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+
+        div.innerHTML += '<img href="resources/img/hospital.png"> Hospital<br>';
+
+        return div;
+    };
+    legend.addTo(map);
 
 	map.on('moveend', function(e) {
 		var zoom = map.getZoom();
@@ -62,85 +69,32 @@ $(document).ready(function() {
 		var data = createQueryData(bbox);
 		converter = new op2geojson();
 		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
-			self.hospitals = data;
-            self.hospitalLayer = buildLayer(data);
 
-    		var filteredLayers = _.map(self.hospitalAttributes, function (attr) {
-	        	return L.geoJson(self.hospitals, {
-                    style: function(feature) {
-                        return {color: 'red'};
-                    },
-    			    onEachFeature: function(feature, layer) {
-				        layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
-			        },
-			        filter: function(feature, layer) {
-				        return _.contains(_.keys(feature.properties), attr);
-			        }
-		        });
-    	    });
-
-            if (self.layers) {
-                self.layers.clearLayers();
+            if (jQuery.isEmptyObject(self.amenityLayers)) {
+	            _.each(self.amenities, function(amenity, i) {
+                    self.amenityLayers[amenity] = L.geoJson(data, {
+                        style: function(feature) {
+                            return {color: 'red'};
+                        },
+    			        onEachFeature: function(feature, layer) {
+				            layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+			            },
+			            filter: function(feature, layer) {
+				            return _.contains(_.values(feature.properties), amenity);
+			            }
+		            });
+                    map.addLayer(self.amenityLayers[amenity]);
+		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i]);
+	    	    });
+            } else {
+	            _.each(self.amenities, function(amenity, i) {
+                    // Update the data for each amenity layer
+                    self.amenityLayers[amenity].clearLayers();
+                    self.amenityLayers[amenity].addData(data);
+	    	    });
             }
-
-	        self.layers = L.control.layers(null, {
-	    	    "Hospitals" : self.hospitalLayer
-	      	}).addTo(map);
-
-	        _.each(filteredLayers, function(layer, i) {
-		        self.layers.addOverlay(layer, self.hospitalAttributes[i]);
-	    	});
-
-	   	    // display layer
-	        $('.leaflet-control-layers-selector').first().trigger('click')
 		});
 	})
-
-	map.locate({setView: true, maxZoom: 12});
-
-    var legend = L.control({position: 'bottomright'});
-    legend.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'info legend');
-
-        div.innerHTML += '<img href="resources/img/hospital.png"> Hospital<br>';
-
-        return div;
-    };
-    legend.addTo(map);
-
-	function buildLayer(data) {
-		return L.geoJson(data, {
-            style: function(feature) {
-                if (feature.properties['amenity'] === 'hospital') {
-                    return {color: 'red'};
-                } else {
-                    return {color: 'blue'};
-                }
-            },
-			onEachFeature: function(feature, layer) {
-				storeBooleanAttributeKeys(feature);
-				layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
-			},
-		});
-	}
-
-	function storeBooleanAttributeKeys(feature) {
-		var isHierarchical = new RegExp('\:');
-
-		function isBoolean (val) {
-			return val === 'yes' || val === 'no';
-		}
-
-		var keys = _.keys(feature.properties);
-		_.each(feature.properties, function(val, key) {
-			if (isHierarchical.exec(key)) {
-				key = key.split(':')[1];
-			}
-			if ((!_.contains(self.hospitalAttributes, key)) && isBoolean(val)) {
-				self.hospitalAttributes.push(key);
-			}
-		});
-	}
 
 	function onLocationFound(e) {
 		self.currentLocation = e.latlng;
@@ -152,4 +106,9 @@ $(document).ready(function() {
 	function onLocationError(e) {
 		alert(e.message);
 	}
+
+	map.on('locationfound', onLocationFound);
+	map.on('locationerror', onLocationError);
+
+	map.locate({setView: true, maxZoom: 12});
 });
