@@ -5,7 +5,7 @@ $(document).ready(function() {
 	self.popupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/potlatch.png">\
 </a>\
-<a href="http://www.openstreetmap.org/edit?editor=remote2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<a href="http://www.openstreetmap.org/edit?editor=remote&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/josm.png">\
 </a>\
 <table>\
