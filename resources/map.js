@@ -2,21 +2,28 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.popupTemplate = _.template('<table><tr><th>Key</th><th>Value</th></tr>\
-     <% _.each(properties, function(val, key) { %> \
-	 <% if (/\:/.exec(key)) { %> \
-	 	<tr> \
-	 		<td><%= key.split(":")[1] %> </td> \
-			<td><%= val %> </td> \
-		</tr> \
-	 <% } else {%> \
-     <tr>\
-	    <td><%= key %> </td> \
-	    <td><%= val %> </td> \
-     </tr>\
-	 <% } %> \
-	 <% }); %> \
-	 </table>');
+	self.popupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<img src="resources/img/potlatch.png">\
+</a>\
+<a href="http://www.openstreetmap.org/edit?editor=remote2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<img src="resources/img/josm.png">\
+</a>\
+<table>\
+<tr><th>Key</th><th>Value</th></tr>\
+<% _.each(properties, function(val, key) { %> \
+<% if (/\:/.exec(key)) { %> \
+<tr> \
+<td><%= key.split(":")[1] %> </td> \
+<td><%= val %> </td> \
+</tr> \
+<% } else {%> \
+<tr>\
+<td><%= key %> </td> \
+<td><%= val %> </td> \
+</tr>\
+<% } %> \
+<% }); %> \
+</table>');
 
 	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
 		maxZoom: 18,
@@ -77,7 +84,14 @@ $(document).ready(function() {
                             return {color: 'red'};
                         },
     			        onEachFeature: function(feature, layer) {
-				            layer.bindPopup(self.popupTemplate({ properties: feature.properties }));
+                            var center;
+                            if (feature.geometry.type === "Point") {
+                                center = feature.geometry.coordinates;
+                            } else {
+                                center = feature.geometry.coordinates[0];
+                            }
+
+				            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));
 			            },
 			            filter: function(feature, layer) {
 				            return _.contains(_.values(feature.properties), amenity);
