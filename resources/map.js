@@ -79,38 +79,15 @@ $(document).ready(function() {
 		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
 
             if (jQuery.isEmptyObject(self.amenityLayers)) {
-	            _.each(self.amenities, function(amenity, i) {
-                    self.amenityLayers[amenity] = L.geoJson(data, {
-                        style: function(feature) {
-                            return {color: 'red'};
-                        },
-    			        onEachFeature: function(feature, layer) {
-                            var center;
-                            if (feature.geometry.type === "Point") {
-                                center = feature.geometry.coordinates;
-                            } else {
-                                center = feature.geometry.coordinates[0];
-                            }
-
-				            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));
-			            },
-			            filter: function(feature, layer) {
-				            return _.contains(_.values(feature.properties), amenity);
-			            }
-		            });
-                    map.addLayer(self.amenityLayers[amenity]);
-		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i]);
-	    	    });
-
                 // Now deal with the catchment areas
                 self.catchmentAreaLayer = L.geoJson(data, {
                     style: function(feature) {
-                        return {fillColor: 'red',
+                        return {fillColor: 'green',
                                 weight: 2,
                                 opacity: 1,
-                                color: 'white',
+                                color: 'black',
                                 dashArray: '3',
-                                fillOpacity: 0.7};
+                                fillOpacity: 0.1};
                     },
     		        onEachFeature: function(feature, layer) {
                         layer.on({
@@ -131,17 +108,42 @@ $(document).ready(function() {
 				        return _.contains(_.values(feature.properties), "catchment_area");
 			        }
 		        });
+
                 map.addLayer(self.catchmentAreaLayer);
 		        self.layersControl.addOverlay(self.catchmentAreaLayer, "Catchment Areas");
+
+	            _.each(self.amenities, function(amenity, i) {
+                    self.amenityLayers[amenity] = L.geoJson(data, {
+                        style: function(feature) {
+                            return {color: 'red',
+                                    weight: 10};
+                        },
+    			        onEachFeature: function(feature, layer) {
+                            var center;
+                            if (feature.geometry.type === "Point") {
+                                center = feature.geometry.coordinates;
+                            } else {
+                                center = feature.geometry.coordinates[0];
+                            }
+
+				            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));
+			            },
+			            filter: function(feature, layer) {
+				            return _.contains(_.values(feature.properties), amenity);
+			            }
+		            });
+                    map.addLayer(self.amenityLayers[amenity]);
+		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
+	    	    });
             } else {
+                self.catchmentAreaLayer.clearLayers();
+                self.catchmentAreaLayer.addData(data);
+
 	            _.each(self.amenities, function(amenity, i) {
                     // Update the data for each amenity layer
                     self.amenityLayers[amenity].clearLayers();
                     self.amenityLayers[amenity].addData(data);
 	    	    });
-
-                self.catchmentAreaLayer.clearLayers();
-                self.catchmentAreaLayer.addData(data);
             }
 		});
 	})
@@ -153,7 +155,7 @@ $(document).ready(function() {
             weight: 5,
             color: '#666',
             dashArray: '',
-            fillOpacity: 0.7
+            fillOpacity: 0.1
         });
 
         if (!L.Browser.ie && !L.Browser.opera) {

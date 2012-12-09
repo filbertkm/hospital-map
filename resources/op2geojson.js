@@ -99,19 +99,33 @@ op2geojson = function() {
 
 	instance.polygon = function(relation, ways, nodes) {
         polyCoordinates = [];
+        var firstCheck = true;
 
 		$.each(relation.members, function(i, member) {
             if (member.role == "outer") {
                 var way = ways[member.ref];
                 var wayCoordinates = instance.lineString(way, nodes).geometry.coordinates;
+
+                // Need to ensure that the first way is in the correct direction, but this can
+                // only be checked when looking at the second way
+                if (firstCheck && polyCoordinates.length != 0) {
+                    firstCheck = false;
+                    if ((polyCoordinates[0][0] == wayCoordinates[0][0] &&
+                        polyCoordinates[0][1] == wayCoordinates[0][1]) ||
+                        (polyCoordinates[0][0] == wayCoordinates[wayCoordinates.length - 1][0] &&
+                        polyCoordinates[0][1] == wayCoordinates[wayCoordinates.length - 1][1])) {
+                        polyCoordinates.reverse();
+                    }
+                }
+
                 if (polyCoordinates.length != 0) {
                     // If this way is backward
                     if (polyCoordinates[polyCoordinates.length - 1][0] != wayCoordinates[0][0] ||
                         polyCoordinates[polyCoordinates.length - 1][1] != wayCoordinates[0][1]) {
                         wayCoordinates.reverse();
                     }
+                    polyCoordinates.pop();
                 }
-                polyCoordinates.shift();
 			    polyCoordinates = polyCoordinates.concat( wayCoordinates );
             }
 		});
