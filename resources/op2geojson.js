@@ -5,7 +5,7 @@ op2geojson = function() {
 	var instance = {},
 		geojson;
 
-	instance.fetch = function(url, data, callback) {
+	instance.fetch = function(url, data, zoom, callback) {
     	$.post(url, data,
 			function(data) {
 				// Add nodes and ways to the layer
@@ -35,7 +35,21 @@ op2geojson = function() {
 				});
 
 				$.each(ways, function(i, way) {
-					features.push( instance.lineString(way, nodes) );
+                    if (zoom < 16) {
+                        var node = nodes[way.nodes[0]];
+		                var point = {
+			                "type" : "Feature",
+			                "geometry" : {
+				                "type" : "Point",
+				                "coordinates" : [node.lon,node.lat]
+			                },
+			                "properties" : {}
+		                 };
+		                _.extend(point.properties, way.tags);
+					    features.push( point );
+                    } else {
+					    features.push( instance.lineString(way, nodes) );
+                    }
 				});
 
 				$.each(relations, function(i, relation) {

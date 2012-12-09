@@ -42,6 +42,14 @@ $(document).ready(function() {
 <% }); %> \
 </table>');
 
+    var hospitalIcon = L.icon({
+        iconUrl: 'resources/img/hospital.png',
+
+        iconSize:     [18, 18], // size of the icon
+        iconAnchor:   [9, 9], // point of the icon which will correspond to marker's location
+        popupAnchor:  [2, -9] // point from which the popup should open relative to the iconAnchor
+    });
+
 	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
 		maxZoom: 18,
 		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -75,7 +83,7 @@ $(document).ready(function() {
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
 
-        div.innerHTML += '<img href="resources/img/hospital.png"> Hospital<br>';
+        div.innerHTML += '<img src="resources/img/hospital.png"> Hospital<br>';
 
         return div;
     };
@@ -93,7 +101,7 @@ $(document).ready(function() {
 		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
 		var data = createQueryData(bbox);
 		converter = new op2geojson();
-		converter.fetch("http://overpass-api.de/api/interpreter", data, function(data) {
+		converter.fetch("http://overpass-api.de/api/interpreter", data, zoom, function(data) {
 
             if (jQuery.isEmptyObject(self.amenityLayers)) {
                 // Now deal with the catchment areas
@@ -127,11 +135,14 @@ $(document).ready(function() {
                     self.amenityLayers[amenity] = L.geoJson(data, {
                         style: function(feature) {
                             return {color: 'red',
+                                    fillColor: 'red',
+                                    fillOpacity: 0.2,
                                     weight: 10};
                         },
     			        onEachFeature: function(feature, layer) {
                             var center;
                             if (feature.geometry.type === "Point") {
+                                layer.options.icon = hospitalIcon;
                                 center = feature.geometry.coordinates;
                             } else {
                                 center = feature.geometry.coordinates[0];
