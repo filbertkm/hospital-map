@@ -25,6 +25,23 @@ $(document).ready(function() {
 <% }); %> \
 </table>');
 
+	self.catchmentTemplate = _.template('<table>\
+<tr><th>Key</th><th>Value</th></tr>\
+<% _.each(properties, function(val, key) { %> \
+<% if (/\:/.exec(key)) { %> \
+<tr> \
+<td><%= key.split(":")[1] %> </td> \
+<td><%= val %> </td> \
+</tr> \
+<% } else {%> \
+<tr>\
+<td><%= key %> </td> \
+<td><%= val %> </td> \
+</tr>\
+<% } %> \
+<% }); %> \
+</table>');
+
 	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
 		maxZoom: 18,
 		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -95,14 +112,8 @@ $(document).ready(function() {
                             mouseout: resetHighlight,
                             click: zoomToFeature
                         });
-                        /*var center;
-                        if (feature.geometry.type === "Point") {
-                            center = feature.geometry.coordinates;
-                        } else {
-                            center = feature.geometry.coordinates[0];
-                        }
 
-			            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));*/
+			            layer.bindPopup(self.catchmentTemplate({ properties: feature.properties }));
 		            },
 			        filter: function(feature, layer) {
 				        return _.contains(_.values(feature.properties), "catchment_area");
