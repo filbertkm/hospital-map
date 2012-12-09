@@ -33,7 +33,7 @@ $(document).ready(function() {
 	var map = L.map( 'map', {
 		zoom: 12,
 		layers: [self.tileLayer],
-	}).setView([51.505, -0.09], 13);
+	}).setView([12.4822, -11.9463], 11);
     // TODO: Not sure why the above call to setView is needed
 	GlobalMap = map;
 
@@ -50,6 +50,7 @@ $(document).ready(function() {
 				"(node[amenity=hospital]("+ bbox +");way[amenity=hospital]("+ bbox +");node(w););" +
 				"(node[amenity=doctors]("+ bbox +");way[amenity=doctors]("+ bbox +");node(w););" +
 				"(node[amenity=dentist]("+ bbox +");way[amenity=dentist]("+ bbox +");node(w););" +
+                "(node(" + bbox + ");relation[type=boundary][boundary=catchment_area];way(r);node(w););" +
 				");out;";
 	}
 
@@ -100,15 +101,74 @@ $(document).ready(function() {
                     map.addLayer(self.amenityLayers[amenity]);
 		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i]);
 	    	    });
+
+                // Now deal with the catchment areas
+                self.catchmentAreaLayer = L.geoJson(data, {
+                    style: function(feature) {
+                        return {fillColor: 'red',
+                                weight: 2,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '3',
+                                fillOpacity: 0.7};
+                    },
+    		        onEachFeature: function(feature, layer) {
+                        layer.on({
+                            mouseover: highlightFeature,
+                            mouseout: resetHighlight,
+                            click: zoomToFeature
+                        });
+                        /*var center;
+                        if (feature.geometry.type === "Point") {
+                            center = feature.geometry.coordinates;
+                        } else {
+                            center = feature.geometry.coordinates[0];
+                        }
+
+			            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));*/
+		            },
+			        filter: function(feature, layer) {
+				        return _.contains(_.values(feature.properties), "catchment_area");
+			        }
+		        });
+                map.addLayer(self.catchmentAreaLayer);
+		        self.layersControl.addOverlay(self.catchmentAreaLayer, "Catchment Areas");
             } else {
 	            _.each(self.amenities, function(amenity, i) {
                     // Update the data for each amenity layer
                     self.amenityLayers[amenity].clearLayers();
                     self.amenityLayers[amenity].addData(data);
 	    	    });
+
+                self.catchmentAreaLayer.clearLayers();
+                self.catchmentAreaLayer.addData(data);
             }
 		});
 	})
+
+    function highlightFeature(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+            weight: 5,
+            color: '#666',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+    }
+
+    function resetHighlight(e) {
+        var geojsonLayer = self.catchmentAreaLayer;
+        self.catchmentAreaLayer.resetStyle(e.target);
+    }
+
+    function zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+    }
 
 	function onLocationFound(e) {
 		self.currentLocation = e.latlng;
