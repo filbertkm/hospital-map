@@ -2,27 +2,24 @@ $(document).ready(function() {
 
 	var self = this;
 
-	self.popupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+	self.hospitalTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/potlatch.png">\
 </a>\
 <a href="http://www.openstreetmap.org/edit?editor=remote&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/josm.png">\
 </a>\
+<h2>Hospital</h2>\
 <table>\
-<tr><th>Key</th><th>Value</th></tr>\
-<% _.each(properties, function(val, key) { %> \
-<% if (/\:/.exec(key)) { %> \
-<tr> \
-<td><%= key.split(":")[1] %> </td> \
-<td><%= val %> </td> \
-</tr> \
-<% } else {%> \
-<tr>\
-<td><%= key %> </td> \
-<td><%= val %> </td> \
-</tr>\
-<% } %> \
-<% }); %> \
+<tr><td>Name</td><td><%= properties["name"] %></td></tr>\
+<tr><td>Emergency</td><td><%= properties["emergency"] %></td></tr>\
+</table>\
+<h2>Catchment Area</h2>\
+<table>\
+<tr><td>Surface Area</td><td></td></tr>\
+<tr><td>Number of villages</td><td></td></tr>\
+<tr><td>Population</td><td></td></tr>\
+<tr><td>Furthest Village from health structure</td><td></td></tr>\
+<tr><td>Average distance of all villages from health structure</td><td></td></tr>\
 </table>');
 
 	self.catchmentTemplate = _.template('<table>\
@@ -104,32 +101,7 @@ $(document).ready(function() {
 		converter.fetch("http://overpass-api.de/api/interpreter", data, zoom, function(data) {
 
             if (jQuery.isEmptyObject(self.amenityLayers)) {
-                // Now deal with the catchment areas
-                self.catchmentAreaLayer = L.geoJson(data, {
-                    style: function(feature) {
-                        return {fillColor: 'green',
-                                weight: 2,
-                                opacity: 1,
-                                color: 'black',
-                                dashArray: '3',
-                                fillOpacity: 0.1};
-                    },
-    		        onEachFeature: function(feature, layer) {
-                        layer.on({
-                            mouseover: highlightFeature,
-                            mouseout: resetHighlight,
-                            click: zoomToFeature
-                        });
-
-			            layer.bindPopup(self.catchmentTemplate({ properties: feature.properties }));
-		            },
-			        filter: function(feature, layer) {
-				        return _.contains(_.values(feature.properties), "catchment_area");
-			        }
-		        });
-
-                map.addLayer(self.catchmentAreaLayer);
-		        self.layersControl.addOverlay(self.catchmentAreaLayer, "Catchment Areas");
+                var markers = {};
 
 	            _.each(self.amenities, function(amenity, i) {
                     self.amenityLayers[amenity] = L.geoJson(data, {
@@ -148,15 +120,47 @@ $(document).ready(function() {
                                 center = feature.geometry.coordinates[0];
                             }
 
-				            layer.bindPopup(self.popupTemplate({ properties: feature.properties, coordinate: center }));
+				            layer.bindPopup(self.hospitalTemplate({ properties: feature.properties, coordinate: center }));
+
+                            markers[feature.id] = layer;
 			            },
 			            filter: function(feature, layer) {
 				            return _.contains(_.values(feature.properties), amenity);
 			            }
 		            });
+
                     map.addLayer(self.amenityLayers[amenity]);
 		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
 	    	    });
+
+                // Now deal with the catchment areas
+                self.catchmentAreaLayer = L.geoJson(data, {
+                    style: function(feature) {
+                        return {fillColor: 'green',
+                                weight: 2,
+                                opacity: 1,
+                                color: 'black',
+                                dashArray: '3',
+                                fillOpacity: 0.1};
+                    },
+    		        onEachFeature: function(feature, layer) {
+                        var marker_layer = markers[feature.properties.subject];
+                        var popup = markers[feature.properties.subject].openPopup;
+                        layer.on({
+                            mouseover: highlightFeature,
+                            mouseout: resetHighlight,
+                            click: function() {
+                                markers[feature.properties.subject].openPopup();
+                            }
+                        });
+		            },
+			        filter: function(feature, layer) {
+				        return _.contains(_.values(feature.properties), "catchment_area");
+			        }
+		        });
+
+                map.addLayer(self.catchmentAreaLayer);
+		        self.layersControl.addOverlay(self.catchmentAreaLayer, "Catchment Areas");
             } else {
                 self.catchmentAreaLayer.clearLayers();
                 self.catchmentAreaLayer.addData(data);
@@ -190,10 +194,6 @@ $(document).ready(function() {
         self.catchmentAreaLayer.resetStyle(e.target);
     }
 
-    function zoomToFeature(e) {
-        map.fitBounds(e.target.getBounds());
-    }
-
 	function onLocationFound(e) {
 		self.currentLocation = e.latlng;
 		var radius = e.accuracy / 2;
@@ -204,6 +204,18 @@ $(document).ready(function() {
 	function onLocationError(e) {
 		alert(e.message);
 	}
+
+    function polygonArea(X, Y, numPoints)
+    {
+        area = 0;         // Accumulates area in the loop
+        j = numPoints-1;  // The last vertex is the 'previous' one to the first
+
+        for (i=0; i<numPoints; i++) {
+            area = area +  (X[j]+X[i]) * (Y[j]-Y[i]);
+            j = i;  // j is previous vertex to i
+        }
+        return area/2;
+    }
 
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);

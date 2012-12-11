@@ -39,6 +39,7 @@ op2geojson = function() {
                         var node = nodes[way.nodes[0]];
 		                var point = {
 			                "type" : "Feature",
+                            "id" : way.id,
 			                "geometry" : {
 				                "type" : "Point",
 				                "coordinates" : [node.lon,node.lat]
@@ -114,6 +115,7 @@ op2geojson = function() {
 	instance.polygon = function(relation, ways, nodes) {
         polyCoordinates = [];
         var firstCheck = true;
+        var subject;
 
 		$.each(relation.members, function(i, member) {
             if (member.role == "outer") {
@@ -141,6 +143,8 @@ op2geojson = function() {
                     polyCoordinates.pop();
                 }
 			    polyCoordinates = polyCoordinates.concat( wayCoordinates );
+            } else if (member.role == "subject") {
+                subject = member.ref;
             }
 		});
 
@@ -155,6 +159,7 @@ op2geojson = function() {
 
 		// Add the tags
 		_.extend(poly.properties, relation.tags);
+        poly.properties["subject"] = subject;
 
 		return poly;
 	}
