@@ -9,13 +9,13 @@ $(document).ready(function() {
 <img src="resources/img/josm.png">\
 </a>\
 <h2>Hospital</h2>\
-<table>\
-<tr><td>Name</td><td><%= properties["name"] %></td></tr>\
-<tr><td>Emergency</td><td><%= properties["emergency"] %></td></tr>\
+<table width="100%">\
+<tr><td>Name</td><td align="right"><%= properties["name"] %></td></tr>\
+<tr><td>Emergency</td><td align="right"><%= properties["emergency"] %></td></tr>\
 </table>\
 <h2>Catchment Area</h2>\
 <table>\
-<tr><td>Surface Area</td><td></td></tr>\
+<tr><td>Surface Area</td><td><%= properties["area"] %></td></tr>\
 <tr><td>Number of villages</td><td></td></tr>\
 <tr><td>Population</td><td></td></tr>\
 <tr><td>Furthest Village from health structure</td><td></td></tr>\
@@ -102,6 +102,42 @@ $(document).ready(function() {
 
             if (jQuery.isEmptyObject(self.amenityLayers)) {
                 var markers = {};
+                var catchmentAreaForAmenity = {};
+
+                _.each(
+                    _.filter(data.features,
+                        function(feature) {
+                            return _.contains(_.values(feature.properties), "catchment_area");
+                        }),
+                    function(catchmentArea) {
+                        catchmentAreaForAmenity[catchmentArea.properties["subject"]] = catchmentArea;
+                    });
+
+                console.log(catchmentAreaForAmenity);
+
+                // Now deal with the catchment areas
+                self.catchmentAreaLayer = L.geoJson(data, {
+                    style: function(feature) {
+                        return {fillColor: 'green',
+                                weight: 2,
+                                opacity: 1,
+                                color: 'black',
+                                dashArray: '3',
+                                fillOpacity: 0.1};
+                    },
+    		        onEachFeature: function(feature, layer) {
+                        layer.on({
+                            mouseover: highlightFeature,
+                            mouseout: resetHighlight,
+                            click: function() {
+                                markers[feature.properties.subject].openPopup();
+                            }
+                        });
+		            },
+			        filter: function(feature, layer) {
+				        return _.contains(_.values(feature.properties), "catchment_area");
+			        }
+		        });
 
 	            _.each(self.amenities, function(amenity, i) {
                     self.amenityLayers[amenity] = L.geoJson(data, {
@@ -120,7 +156,19 @@ $(document).ready(function() {
                                 center = feature.geometry.coordinates[0];
                             }
 
-				            layer.bindPopup(self.hospitalTemplate({ properties: feature.properties, coordinate: center }));
+                            var catchmentArea = catchmentAreaForAmenity[feature.id];
+
+                            var format = new OpenLayers.Format.GeoJSON;
+                            var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
+
+                            var areaInSquareMeters = openLayersGeo.getGeodesicArea();
+                            var areaString = areaInSquareMeters.toFixed(2) + "m" + "2".sup();
+                            if (areaInSquareMeters > 1000000) {
+                                areaString = (areaInSquareMeters / 1000000).toFixed(2) + "km" + "2".sup();
+                            }
+                            var areaProperties = { area: areaString }
+
+				            layer.bindPopup(self.hospitalTemplate({ properties: $.extend(feature.properties, areaProperties), coordinate: center }));
 
                             markers[feature.id] = layer;
 			            },
@@ -132,32 +180,6 @@ $(document).ready(function() {
                     map.addLayer(self.amenityLayers[amenity]);
 		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
 	    	    });
-
-                // Now deal with the catchment areas
-                self.catchmentAreaLayer = L.geoJson(data, {
-                    style: function(feature) {
-                        return {fillColor: 'green',
-                                weight: 2,
-                                opacity: 1,
-                                color: 'black',
-                                dashArray: '3',
-                                fillOpacity: 0.1};
-                    },
-    		        onEachFeature: function(feature, layer) {
-                        var marker_layer = markers[feature.properties.subject];
-                        var popup = markers[feature.properties.subject].openPopup;
-                        layer.on({
-                            mouseover: highlightFeature,
-                            mouseout: resetHighlight,
-                            click: function() {
-                                markers[feature.properties.subject].openPopup();
-                            }
-                        });
-		            },
-			        filter: function(feature, layer) {
-				        return _.contains(_.values(feature.properties), "catchment_area");
-			        }
-		        });
 
                 map.addLayer(self.catchmentAreaLayer);
 		        self.layersControl.addOverlay(self.catchmentAreaLayer, "Catchment Areas");

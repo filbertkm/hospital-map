@@ -1,3 +1,6 @@
 [submodule "resources/leaflet"]
 	path = resources/leaflet
 	url = git://github.com/CloudMade/Leaflet.git
+[submodule "resources/openlayers"]
+	path = resources/openlayers
+	url = git://github.com/openlayers/openlayers.git
