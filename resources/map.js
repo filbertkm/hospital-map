@@ -9,7 +9,7 @@ $(document).ready(function() {
 <h2>Hospital</h2>\
 <table width="100%">\
 <tr><td>Name</td><td align="right"><%= properties["name"] %></td></tr>\
-<tr><td>Emergency</td><td align="right"><%= properties["emergency"] %></td></tr>\
+<tr><td>Emergency</td><td align="right" style="text-transform:capitalize;"><%= properties["emergency"] %></td></tr>\
 </table>\
 <h2>Catchment Area</h2>\
 <table>\
