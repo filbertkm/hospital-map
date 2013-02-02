@@ -1,13 +1,11 @@
 $(document).ready(function() {
 
-	var self = this;
+	var self = this;  // the HTMLDocument
 
-	self.hospitalTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
-<img src="resources/img/potlatch.png">\
-</a>\
+	self.popupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<img src="resources/img/potlatch.png"></a>\
 <a href="http://www.openstreetmap.org/edit?editor=remote&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
-<img src="resources/img/josm.png">\
-</a>\
+<img src="resources/img/josm.png"></a>\
 <h2>Hospital</h2>\
 <table width="100%">\
 <tr><td>Name</td><td align="right"><%= properties["name"] %></td></tr>\
@@ -22,29 +20,12 @@ $(document).ready(function() {
 <tr><td>Average distance of all villages from health structure</td><td></td></tr>\
 </table>');
 
-	self.catchmentTemplate = _.template('<table>\
-<tr><th>Key</th><th>Value</th></tr>\
-<% _.each(properties, function(val, key) { %> \
-<% if (/\:/.exec(key)) { %> \
-<tr> \
-<td><%= key.split(":")[1] %> </td> \
-<td><%= val %> </td> \
-</tr> \
-<% } else {%> \
-<tr>\
-<td><%= key %> </td> \
-<td><%= val %> </td> \
-</tr>\
-<% } %> \
-<% }); %> \
-</table>');
-
     var hospitalIcon = L.icon({
         iconUrl: 'resources/img/hospital.png',
 
-        iconSize:     [18, 18], // size of the icon
-        iconAnchor:   [9, 9], // point of the icon which will correspond to marker's location
-        popupAnchor:  [2, -9] // point from which the popup should open relative to the iconAnchor
+        iconSize:     [18, 18],
+        iconAnchor:   [9, 9], // point on the icon corresponding to marker's location
+        popupAnchor:  [2, -9] // point to open the popup from relative to iconAnchor
     });
 
 	self.tileLayer = L.tileLayer('http://{s}.www.toolserver.org/tiles/osm-no-labels/{z}/{x}/{y}.png', {
@@ -57,7 +38,6 @@ $(document).ready(function() {
 		layers: [self.tileLayer],
 	}).setView([12.4822, -11.9463], 11);
     // TODO: Not sure why the above call to setView is needed
-	GlobalMap = map;
 
 	self.amenities = ["hospital", "doctors", "dentist"];
     // This contains the layers for each of the above amenities
@@ -79,9 +59,7 @@ $(document).ready(function() {
     var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-
         div.innerHTML += '<img src="resources/img/hospital.png"> Hospital<br>';
-
         return div;
     };
     legend.addTo(map);
@@ -92,14 +70,18 @@ $(document).ready(function() {
 			return;
 		}
 
+		// Make the bounding box string
 		var bounds = map.getBounds();
 		var sw = bounds.getSouthWest();
 		var ne = bounds.getNorthEast();
 		bbox = [sw.lat, sw.lng, ne.lat, ne.lng].join(',');
+
+		// Get the data
 		var data = createQueryData(bbox);
+
+		// Convert the data to GeoJSON
 		converter = new op2geojson();
 		converter.fetch("http://overpass-api.de/api/interpreter", data, zoom, function(data) {
-
             if (jQuery.isEmptyObject(self.amenityLayers)) {
                 var markers = {};
                 var catchmentAreaForAmenity = {};
@@ -168,7 +150,7 @@ $(document).ready(function() {
                             }
                             var areaProperties = { area: areaString }
 
-				            layer.bindPopup(self.hospitalTemplate({ properties: $.extend(feature.properties, areaProperties), coordinate: center }));
+				            layer.bindPopup(self.popupTemplate({ properties: $.extend(feature.properties, areaProperties), coordinate: center }));
 
                             markers[feature.id] = layer;
 			            },
@@ -178,7 +160,8 @@ $(document).ready(function() {
 		            });
 
                     map.addLayer(self.amenityLayers[amenity]);
-		            self.layersControl.addOverlay(self.amenityLayers[amenity], self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
+		            self.layersControl.addOverlay(self.amenityLayers[amenity],
+						self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
 	    	    });
 
                 map.addLayer(self.catchmentAreaLayer);
@@ -212,7 +195,6 @@ $(document).ready(function() {
     }
 
     function resetHighlight(e) {
-        var geojsonLayer = self.catchmentAreaLayer;
         self.catchmentAreaLayer.resetStyle(e.target);
     }
 
@@ -220,24 +202,12 @@ $(document).ready(function() {
 		self.currentLocation = e.latlng;
 		var radius = e.accuracy / 2;
 		L.marker(e.latlng).addTo(map)
-		.bindPopup("You are within " + radius + " meters from this point").openPopup();
+			.bindPopup("You are within " + radius + " meters of this point.").openPopup();
 	}
 
 	function onLocationError(e) {
 		alert(e.message);
 	}
-
-    function polygonArea(X, Y, numPoints)
-    {
-        area = 0;         // Accumulates area in the loop
-        j = numPoints-1;  // The last vertex is the 'previous' one to the first
-
-        for (i=0; i<numPoints; i++) {
-            area = area +  (X[j]+X[i]) * (Y[j]-Y[i]);
-            j = i;  // j is previous vertex to i
-        }
-        return area/2;
-    }
 
 	map.on('locationfound', onLocationFound);
 	map.on('locationerror', onLocationError);
