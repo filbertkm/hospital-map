@@ -55,7 +55,9 @@ op2geojson = function() {
 					relation.tags['type'] == 'boundary' &&
 					relation.tags['boundary'] == 'catchment_area') {
 
-					features.push( instance.polygon(relation, ways, nodes) );
+					var poly = instance.polygon(relation, ways, nodes);
+					poly.id = relation.tags['id'];
+					features.push(poly);
 				}
 			});
 
