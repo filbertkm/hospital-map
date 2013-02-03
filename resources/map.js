@@ -1,36 +1,49 @@
 function getDataURIForRegion(self, region) {
     var dataURI = "data:text/csv,";
-    dataURI += "Name,Size of Catchment Area,Population of Catchment Area%0A";
+    dataURI += "Name,Size of Catchment Area,Population of Catchment Area,Average Distance to Health Post,Max Distance to the Health Post%0A";
 
     _.each(self.amenities["hospital"], function(amenity) {
-            var catchmentArea = self.catchmentAreas[amenity.id];
-            var settlements = catchmentArea.settlements;
+        var catchmentArea = self.catchmentAreas[amenity.id];
+        var settlements = catchmentArea.settlements;
 
-            var format = new OpenLayers.Format.GeoJSON;
+        var format = new OpenLayers.Format.GeoJSON;
 
-            var sumOfDistances = 0;
-            var maxDistance = 0;
+        var sumOfDistances = 0;
+        var maxDistance = 0;
 
-            var healthCenterGeo = format.parseGeometry(catchmentArea.geometry);
+        var Geographic  = new OpenLayers.Projection("EPSG:4326");
+        var Mercator = new OpenLayers.Projection("EPSG:900913");
 
-            _.each(catchmentArea.settlements, function (settlement) {
-                var settlementGeo = format.parseGeometry(catchmentArea.geometry);
-            });
+        var amenityPoint = format.parseGeometry(amenity.geometry);
+        if (amenity.geometry.type == "Point") {
+            //amenityPoint = new OpenLayers.Geometry.Point(amenity.geometry.coordinates[0], amenity.geometry.coordinates[1]).transform(Geographic, Mercator);
+        } else { // Its a polygon
+            amenityPoint = amenityPoint.getCentroid();
+        }
 
-            var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
+        _.each(catchmentArea.settlements, function (settlement) {
+            var settlementGeo = format.parseGeometry(settlement.geometry);
 
-            var areaInSquareMeters = openLayersGeo.getGeodesicArea();
-
-            var population = 0;
-            var numberOfSettlementsWithoutPopulation = 0;
-
-            _.each(settlements, function(settlement) {
-                if (typeof settlement.properties.population != "undefined") {
-                    population += parseInt(settlement.properties.population);
-                }});
-
-            dataURI += amenity.properties["name"] + "," + areaInSquareMeters +"," + population +"%0A";
+            var distance = settlementGeo.distanceTo(amenityPoint);
+            sumOfDistances += distance;
+            if (distance > maxDistance)
+                maxDistance = distance;
         });
+
+        var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
+
+        var areaInSquareMeters = openLayersGeo.getGeodesicArea();
+
+        var population = 0;
+        var numberOfSettlementsWithoutPopulation = 0;
+
+        _.each(settlements, function(settlement) {
+            if (typeof settlement.properties.population != "undefined") {
+                population += parseInt(settlement.properties.population);
+            }});
+
+        dataURI += amenity.properties["name"] + "," + areaInSquareMeters +"," + population + "," + (sumOfDistances/settlements.length) + "," + maxDistance + "%0A";
+    });
 
     return dataURI;
 }
@@ -201,6 +214,28 @@ function displayMap(self, map) {
                 var format = new OpenLayers.Format.GeoJSON;
                 var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
 
+                var sumOfDistances = 0;
+                var maxDistance = 0;
+
+                var Geographic  = new OpenLayers.Projection("EPSG:4326");
+                var Mercator = new OpenLayers.Projection("EPSG:900913");
+
+                var featurePoint = format.parseGeometry(feature.geometry);
+                if (feature.geometry.type == "Point") {
+                    //amenityPoint = new OpenLayers.Geometry.Point(amenity.geometry.coordinates[0], amenity.geometry.coordinates[1]).transform(Geographic, Mercator);
+                } else { // Its a polygon
+                    featurePoint = featurePoint.getCentroid();
+                }
+
+                _.each(catchmentArea.settlements, function (settlement) {
+                    var settlementGeo = format.parseGeometry(settlement.geometry);
+
+                    var distance = settlementGeo.distanceTo(featurePoint);
+                    sumOfDistances += distance;
+                    if (distance > maxDistance)
+                        maxDistance = distance;
+                });
+
                 var areaInSquareMeters = openLayersGeo.getGeodesicArea();
                 var areaString = areaInSquareMeters.toFixed(2) + "m" + "2".sup();
                 if (areaInSquareMeters > 1000000) {
@@ -213,7 +248,7 @@ function displayMap(self, map) {
                                        number_of_settlements: "Unknown",
                                        population: "Unknown",
                                        greatest_settlement_dist: "Unknown",
-                                       average_settlement_dist: "Unknown" 
+                                       average_settlement_dist: "Unknown"
                                      }
                 } else {
                     var population = 0;
@@ -237,8 +272,8 @@ function displayMap(self, map) {
                     areaProperties = { area: areaString,
                                        number_of_settlements: settlements.length,
                                        population: population,
-                                       greatest_settlement_dist: "Unknown",
-                                       average_settlement_dist: "Unknown" 
+                                       greatest_settlement_dist: maxDistance,
+                                       average_settlement_dist: (sumOfDistances/catchmentArea.settlements.length)
                                      }
                 }
 
