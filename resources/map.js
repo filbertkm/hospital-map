@@ -1,3 +1,40 @@
+function getDataURIForRegion(self, region) {
+    var dataURI = "data:text/csv,";
+    dataURI += "Name,Size of Catchment Area,Population of Catchment Area%0A";
+
+    _.each(self.amenities["hospital"], function(amenity) {
+            var catchmentArea = self.catchmentAreas[amenity.id];
+            var settlements = catchmentArea.settlements;
+
+            var format = new OpenLayers.Format.GeoJSON;
+
+            var sumOfDistances = 0;
+            var maxDistance = 0;
+
+            var healthCenterGeo = format.parseGeometry(catchmentArea.geometry);
+
+            _.each(catchmentArea.settlements, function (settlement) {
+                var settlementGeo = format.parseGeometry(catchmentArea.geometry);
+            });
+
+            var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
+
+            var areaInSquareMeters = openLayersGeo.getGeodesicArea();
+
+            var population = 0;
+            var numberOfSettlementsWithoutPopulation = 0;
+
+            _.each(settlements, function(settlement) {
+                if (typeof settlement.properties.population != "undefined") {
+                    population += parseInt(settlement.properties.population);
+                }});
+
+            dataURI += amenity.properties["name"] + "," + areaInSquareMeters +"," + population +"%0A";
+        });
+
+    return dataURI;
+}
+
 function initMap(self) {
 	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		maxZoom: 18,
@@ -10,7 +47,8 @@ function initMap(self) {
 		layers: [self.tileLayer],
 	}).setView([12.4822, -11.9463], 11);
 
-	self.amenities = ["hospital", "doctors", "dentist"];
+	self.amenitiesShown = ["hospital", "doctors", "dentist"];
+    self.amenities = {};
     self.amenityLayers = {};  // contains the layers for each amenity type
     self.catchmentAreas = {};
 
@@ -147,6 +185,8 @@ function displayMap(self, map) {
                         weight: 10};
             },
             onEachFeature: function(feature, layer) {
+                self.amenities[amenity].push(feature);
+
                 var center;
                 if (feature.geometry.type === "Point") {
                     layer.options.icon = hospitalIcon;
@@ -240,6 +280,14 @@ function displayMap(self, map) {
 
 	var query = createQueryData(bbox);
 
+    if (typeof self.amenities != "undefined") {
+        console.log(getDataURIForRegion(self, "region"));
+    }
+    self.amenities = {};
+    _.each(self.amenitiesShown, function(amenity) {
+        self.amenities[amenity] = [];
+    });
+
 	// Convert the data to GeoJSON
 	self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
 		if (jQuery.isEmptyObject(self.amenityLayers)) {
@@ -261,12 +309,12 @@ function displayMap(self, map) {
 			// Now deal with the catchment areas
             self.catchmentAreaLayer = createCatchmentAreaLayer(data);
 
-			_.each(self.amenities, function(amenity, i) {
+			_.each(self.amenitiesShown, function(amenity, i) {
 				self.amenityLayers[amenity] = createAmenityLayer(data, amenity);
 
 				map.addLayer(self.amenityLayers[amenity]);
 				self.layersControl.addOverlay(self.amenityLayers[amenity],
-					self.amenities[i].charAt(0).toUpperCase() + self.amenities[i].slice(1));
+					self.amenitiesShown[i].charAt(0).toUpperCase() + self.amenitiesShown[i].slice(1));
 			});
 
 			map.addLayer(self.catchmentAreaLayer);
@@ -275,7 +323,7 @@ function displayMap(self, map) {
 			self.catchmentAreaLayer.clearLayers();
 			self.catchmentAreaLayer.addData(data);
 
-			_.each(self.amenities, function(amenity, i) {
+			_.each(self.amenitiesShown, function(amenity, i) {
 				// Update the data for each amenity layer
 				self.amenityLayers[amenity].clearLayers();
 				self.amenityLayers[amenity].addData(data);
