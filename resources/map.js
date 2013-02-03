@@ -186,7 +186,23 @@ function displayMap(self, map) {
 							color: 'black',
 							dashArray: '3',
 							fillOpacity: 0.1};
-				}
+				},
+                onEachFeature: function(feature, layer) {
+                    var center;
+                    if (feature.geometry.type === "Point") {
+                        center = feature.geometry.coordinates;
+                    } else {
+                        center = feature.geometry.coordinates[0];
+                    }
+
+                    var displayProperties = { name: feature.properties["name"], population: feature.properties["population"] };
+                    if (typeof displayProperties["name"] == "undefined")
+                        displayProperties["name"] = "Unknown";
+                    if (typeof displayProperties["population"] == "undefined")
+                        displayProperties["population"] = "Unknown";
+
+                    layer.bindPopup(self.settlementPopupTemplate({ properties: feature.properties, coordinate: center }));
+                },
 			});
 			map.addLayer(self.villageLayer);
 			self.layersControl.addOverlay(self.villageLayer, "Settlements");
@@ -257,6 +273,16 @@ $(document).ready(function() {
 <tr><td>Population</td><td align="right"><%= properties["population"] %></td></tr>\
 <tr><td>Furthest distance from settlement to health structure</td><td align="right"><%= properties["greatest_settlement_dist"] %></td></tr>\
 <tr><td>Average distance of all settlements from health structure</td><td align="right"><%= properties["average_settlement_dist"] %></td></tr>\
+</table>');
+
+	self.settlementPopupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<img src="resources/img/potlatch.png"></a>\
+<a href="http://www.openstreetmap.org/edit?editor=remote&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+<img src="resources/img/josm.png"></a>\
+<h3>Settlement</h3>\
+<table width="100%">\
+<tr><td>Name</td><td align="right"><%= properties["name"] %></td></tr>\
+<tr><td>Population</td><td align="right"><%= properties["population"] %></td></tr>\
 </table>');
 
 	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
