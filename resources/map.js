@@ -145,13 +145,13 @@ function displayMap(self, map) {
                 markers[feature.id] = layer;
             },
             filter: function(feature, layer) {
+				// TODO: Fix and make more efficient
                 return _.contains(_.values(feature.properties), amenity);
             }
         });
     }
 
     function createCatchmentAreaVillageLayer(catchmentArea) {
-
         var poly = "";
         _.each(catchmentArea.geometry.coordinates[0], function(coordinatePair) {
             poly += coordinatePair[1] + " " + coordinatePair[0] + " ";
@@ -161,31 +161,14 @@ function displayMap(self, map) {
         var query = 'data=[out:json];(node(poly:"' + poly + '");<;node(w););out;';
 
         // Convert the data to GeoJSON
-
+		// TODO: Don't refetch villages on every map move
         self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
             data.features = _.filter(data.features, function(feature) {
                                     return _.contains(_.keys(feature.properties), "place") ||
                                        feature.properties["landuse"] == "residential";
                                 });
             catchmentArea.settlements = data.features;
-
-            if (typeof self.villageLayers[catchmentArea.id] == 'undefined') {
-                self.villageLayers[catchmentArea.id] = L.geoJson(data, {
-                    style: function(feature) {
-                        return {fillColor: 'green',
-                                weight: 2,
-                                opacity: 1,
-                                color: 'black',
-                                dashArray: '3',
-                                fillOpacity: 0.1};
-                    }
-                });
-
-			    map.addLayer(self.villageLayers[catchmentArea.id]);
-            } else {
-                self.villageLayers[catchmentArea.id].clearLayers();
-                self.villageLayers[catchmentArea.id].addData(data);
-            }
+			self.villageLayer.addData(data);
         });
     }
 
@@ -195,6 +178,19 @@ function displayMap(self, map) {
 	self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
 		if (jQuery.isEmptyObject(self.amenityLayers)) {
 
+			self.villageLayer = L.geoJson(data, {
+				style: function(feature) {
+					return {fillColor: 'green',
+							weight: 2,
+							opacity: 1,
+							color: 'black',
+							dashArray: '3',
+							fillOpacity: 0.1};
+				}
+			});
+			map.addLayer(self.villageLayer);
+			self.layersControl.addOverlay(self.villageLayer, "Settlements");
+			self.villageLayer.clearLayers();
             // For each catchment area polygon
 			_.each(
 				_.filter(data.features,
