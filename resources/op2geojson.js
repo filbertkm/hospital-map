@@ -56,7 +56,7 @@ op2geojson = function() {
 					relation.tags['boundary'] == 'catchment_area') {
 
 					var poly = instance.polygon(relation, ways, nodes);
-					poly.id = relation.tags['id'];
+					poly.id = relation.id;
 					features.push(poly);
 				}
 			});
@@ -119,6 +119,7 @@ op2geojson = function() {
 		$.each(relation.members, function(i, member) {
             if (member.role == "outer") {
                 var way = ways[member.ref];
+                if (typeof way == 'undefined') return;
                 var wayCoords = instance.lineString(way, nodes).geometry.coordinates;
 				var numNodes = wayCoords.length
 
