@@ -126,9 +126,9 @@ function displayMap(self, map) {
 
                     if (numberOfSettlementsWithoutPopulation != 0) {
                         if (numberOfSettlementsWithoutPopulation == 1) {
-                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " has no population set)";
+                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " settlement has no population set)";
                         } else {
-                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " have no population set)";
+                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " settlements have no population set)";
                         }
                     }
 
@@ -256,11 +256,11 @@ $(document).ready(function() {
 </table>\
 <h2>Catchment Area</h2>\
 <table>\
-<tr><td>Surface Area</td><td><%= properties["area"] %></td></tr>\
-<tr><td>Number of Settlements</td><td><%= properties["number_of_settlements"] %></td></tr>\
-<tr><td>Population</td><td><%= properties["population"] %></td></tr>\
-<tr><td>Furthest distance from settlement to health structure</td><td><%= properties["greatest_settlement_dist"] %></td></tr>\
-<tr><td>Average distance of all settlements from health structure</td><td><%= properties["average_settlement_dist"] %></td></tr>\
+<tr><td>Surface Area</td><td align="right"><%= properties["area"] %></td></tr>\
+<tr><td>Number of Settlements</td><td align="right"><%= properties["number_of_settlements"] %></td></tr>\
+<tr><td>Population</td><td align="right"><%= properties["population"] %></td></tr>\
+<tr><td>Furthest distance from settlement to health structure</td><td align="right"><%= properties["greatest_settlement_dist"] %></td></tr>\
+<tr><td>Average distance of all settlements from health structure</td><td align="right"><%= properties["average_settlement_dist"] %></td></tr>\
 </table>');
 
 	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
