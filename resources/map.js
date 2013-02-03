@@ -93,6 +93,8 @@ function displayMap(self, map) {
                 }
 
                 var catchmentArea = self.catchmentAreas[feature.id];
+                var populationAreas = catchmentArea.populationAreas;
+                console.log(populationAreas);
 
                 var format = new OpenLayers.Format.GeoJSON;
                 var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
@@ -102,7 +104,23 @@ function displayMap(self, map) {
                 if (areaInSquareMeters > 1000000) {
                     areaString = (areaInSquareMeters / 1000000).toFixed(2) + "km" + "2".sup();
                 }
-                var areaProperties = { area: areaString }
+
+                var areaProperties;
+                if (typeof populationAreas == "undefined") {
+                    areaProperties = { area: areaString,
+                                       number_of_villages: "Unknown",
+                                       population: "Unknown",
+                                       greatest_village_dist: "Unknown",
+                                       average_village_dist: "Unknown" 
+                                     }
+                } else {
+                    areaProperties = { area: areaString,
+                                       number_of_villages: populationAreas.length,
+                                       population: "Unknown",
+                                       greatest_village_dist: "Unknown",
+                                       average_village_dist: "Unknown" 
+                                     }
+                }
 
                 layer.bindPopup(self.popupTemplate({ properties: $.extend(feature.properties, areaProperties), coordinate: center }));
 
@@ -127,8 +145,13 @@ function displayMap(self, map) {
         // Convert the data to GeoJSON
 
         self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
-            if (typeof self.villageLayers[catchmentArea.id] == 'undefined') {
+            data.features = _.filter(data.features, function(feature) {
+                                    return _.contains(_.keys(feature.properties), "place") ||
+                                       feature.properties["landuse"] == "residential";
+                                });
+            catchmentArea.populationAreas = data.features;
 
+            if (typeof self.villageLayers[catchmentArea.id] == 'undefined') {
                 self.villageLayers[catchmentArea.id] = L.geoJson(data, {
                     style: function(feature) {
                         return {fillColor: 'green',
@@ -137,10 +160,6 @@ function displayMap(self, map) {
                                 color: 'black',
                                 dashArray: '3',
                                 fillOpacity: 0.1};
-                    },
-                    filter: function(feature, layer) {
-                        return _.contains(_.keys(feature.properties), "place") ||
-                               feature.properties["landuse"] == "residential";
                     }
                 });
 
@@ -220,10 +239,10 @@ $(document).ready(function() {
 <h2>Catchment Area</h2>\
 <table>\
 <tr><td>Surface Area</td><td><%= properties["area"] %></td></tr>\
-<tr><td>Number of villages</td><td></td></tr>\
-<tr><td>Population</td><td></td></tr>\
-<tr><td>Furthest Village from health structure</td><td></td></tr>\
-<tr><td>Average distance of all villages from health structure</td><td></td></tr>\
+<tr><td>Number of villages</td><td><%= properties["number_of_villages"] %></td></tr>\
+<tr><td>Population</td><td><%= properties["population"] %></td></tr>\
+<tr><td>Furthest Village from health structure</td><td><%= properties["greatest_village_dist"] %></td></tr>\
+<tr><td>Average distance of all villages from health structure</td><td><%= properties["average_village_dist"] %></td></tr>\
 </table>');
 
 	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
