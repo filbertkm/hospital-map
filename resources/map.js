@@ -93,8 +93,7 @@ function displayMap(self, map) {
                 }
 
                 var catchmentArea = self.catchmentAreas[feature.id];
-                var populationAreas = catchmentArea.populationAreas;
-                console.log(populationAreas);
+                var settlements = catchmentArea.settlements;
 
                 var format = new OpenLayers.Format.GeoJSON;
                 var openLayersGeo = format.parseGeometry(catchmentArea.geometry);
@@ -106,19 +105,38 @@ function displayMap(self, map) {
                 }
 
                 var areaProperties;
-                if (typeof populationAreas == "undefined") {
+                if (typeof settlements == "undefined") {
                     areaProperties = { area: areaString,
-                                       number_of_villages: "Unknown",
+                                       number_of_settlements: "Unknown",
                                        population: "Unknown",
-                                       greatest_village_dist: "Unknown",
-                                       average_village_dist: "Unknown" 
+                                       greatest_settlement_dist: "Unknown",
+                                       average_settlement_dist: "Unknown" 
                                      }
                 } else {
+                    var population = 0;
+                    var numberOfSettlementsWithoutPopulation = 0;
+
+                    _.each(settlements, function(settlement) {
+                        if (typeof settlement.properties.population != "undefined") {
+                            console.log(settlement.properties.population);
+                            population += parseInt(settlement.properties.population);
+                        } else {
+                            numberOfSettlementsWithoutPopulation++;
+                        }});
+
+                    if (numberOfSettlementsWithoutPopulation != 0) {
+                        if (numberOfSettlementsWithoutPopulation == 1) {
+                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " has no population set)";
+                        } else {
+                            population = population + " (but " + numberOfSettlementsWithoutPopulation + " have no population set)";
+                        }
+                    }
+
                     areaProperties = { area: areaString,
-                                       number_of_villages: populationAreas.length,
-                                       population: "Unknown",
-                                       greatest_village_dist: "Unknown",
-                                       average_village_dist: "Unknown" 
+                                       number_of_settlements: settlements.length,
+                                       population: population,
+                                       greatest_settlement_dist: "Unknown",
+                                       average_settlement_dist: "Unknown" 
                                      }
                 }
 
@@ -149,7 +167,7 @@ function displayMap(self, map) {
                                     return _.contains(_.keys(feature.properties), "place") ||
                                        feature.properties["landuse"] == "residential";
                                 });
-            catchmentArea.populationAreas = data.features;
+            catchmentArea.settlements = data.features;
 
             if (typeof self.villageLayers[catchmentArea.id] == 'undefined') {
                 self.villageLayers[catchmentArea.id] = L.geoJson(data, {
@@ -239,10 +257,10 @@ $(document).ready(function() {
 <h2>Catchment Area</h2>\
 <table>\
 <tr><td>Surface Area</td><td><%= properties["area"] %></td></tr>\
-<tr><td>Number of villages</td><td><%= properties["number_of_villages"] %></td></tr>\
+<tr><td>Number of Settlements</td><td><%= properties["number_of_settlements"] %></td></tr>\
 <tr><td>Population</td><td><%= properties["population"] %></td></tr>\
-<tr><td>Furthest Village from health structure</td><td><%= properties["greatest_village_dist"] %></td></tr>\
-<tr><td>Average distance of all villages from health structure</td><td><%= properties["average_village_dist"] %></td></tr>\
+<tr><td>Furthest distance from settlement to health structure</td><td><%= properties["greatest_settlement_dist"] %></td></tr>\
+<tr><td>Average distance of all settlements from health structure</td><td><%= properties["average_settlement_dist"] %></td></tr>\
 </table>');
 
 	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
