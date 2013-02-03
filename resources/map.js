@@ -1,3 +1,66 @@
+function initMap(self) {
+	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+	});
+
+	// Create the map
+	var map = L.map( 'map', {
+		zoom: 12,
+		layers: [self.tileLayer],
+	}).setView([12.4822, -11.9463], 11);
+
+	self.amenities = ["hospital", "doctors", "dentist"];
+    self.amenityLayers = {};  // contains the layers for each amenity type
+    self.catchmentAreas = {};
+
+	// Create the settlement layer
+	self.settlementLayer = L.geoJson({ type: "FeatureCollection", features: [] }, {
+		style: function(feature) {
+			return {fillColor: 'green',
+					weight: 2,
+					opacity: 1,
+					color: 'black',
+					dashArray: '3',
+					fillOpacity: 0.1};
+		},
+        onEachFeature: function(feature, layer) {
+            var center;
+            if (feature.geometry.type === "Point") {
+                center = feature.geometry.coordinates;
+            } else {
+                center = feature.geometry.coordinates[0];
+            }
+
+            var displayProperties = { name: feature.properties["name"], population: feature.properties["population"] };
+            if (typeof displayProperties["name"] == "undefined")
+                displayProperties["name"] = "Unknown";
+            if (typeof displayProperties["population"] == "undefined")
+                displayProperties["population"] = "Unknown";
+
+            layer.bindPopup(self.settlementPopupTemplate({ properties: displayProperties, coordinate: center }));
+        }
+	});
+	map.addLayer(self.settlementLayer);
+
+	// Layer controller
+	self.layersControl = L.control.layers().addTo(map);
+	self.layersControl.addOverlay(self.settlementLayer, "Settlements");
+
+	L.control.locate().addTo(map);
+
+	// Legend
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<img src="resources/img/hospital.png"> Hospital<br>';
+        return div;
+    };
+    legend.addTo(map);
+
+	return map;
+}
+
 function displayMap(self, map) {
 
 	function createQueryData(bbox) {
@@ -118,7 +181,6 @@ function displayMap(self, map) {
 
                     _.each(settlements, function(settlement) {
                         if (typeof settlement.properties.population != "undefined") {
-                            console.log(settlement.properties.population);
                             population += parseInt(settlement.properties.population);
                         } else {
                             numberOfSettlementsWithoutPopulation++;
@@ -151,7 +213,12 @@ function displayMap(self, map) {
         });
     }
 
-    function createCatchmentAreaVillageLayer(catchmentArea) {
+    function addSettlementsForArea(catchmentArea) {
+		if (typeof catchmentArea.settlements != 'undefined') {
+			return;
+		}
+
+		// Create the bounding polygon for the query
         var poly = "";
         _.each(catchmentArea.geometry.coordinates[0], function(coordinatePair) {
             poly += coordinatePair[1] + " " + coordinatePair[0] + " ";
@@ -160,15 +227,14 @@ function displayMap(self, map) {
 
         var query = 'data=[out:json];(node(poly:"' + poly + '");<;node(w););out;';
 
-        // Convert the data to GeoJSON
-		// TODO: Don't refetch villages on every map move
+        // Fetch settlement data
         self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
             data.features = _.filter(data.features, function(feature) {
                                     return _.contains(_.keys(feature.properties), "place") ||
                                        feature.properties["landuse"] == "residential";
                                 });
             catchmentArea.settlements = data.features;
-			self.villageLayer.addData(data);
+			self.settlementLayer.addData(data);
         });
     }
 
@@ -178,35 +244,6 @@ function displayMap(self, map) {
 	self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
 		if (jQuery.isEmptyObject(self.amenityLayers)) {
 
-			self.villageLayer = L.geoJson(data, {
-				style: function(feature) {
-					return {fillColor: 'green',
-							weight: 2,
-							opacity: 1,
-							color: 'black',
-							dashArray: '3',
-							fillOpacity: 0.1};
-				},
-                onEachFeature: function(feature, layer) {
-                    var center;
-                    if (feature.geometry.type === "Point") {
-                        center = feature.geometry.coordinates;
-                    } else {
-                        center = feature.geometry.coordinates[0];
-                    }
-
-                    var displayProperties = { name: feature.properties["name"], population: feature.properties["population"] };
-                    if (typeof displayProperties["name"] == "undefined")
-                        displayProperties["name"] = "Unknown";
-                    if (typeof displayProperties["population"] == "undefined")
-                        displayProperties["population"] = "Unknown";
-
-                    layer.bindPopup(self.settlementPopupTemplate({ properties: feature.properties, coordinate: center }));
-                },
-			});
-			map.addLayer(self.villageLayer);
-			self.layersControl.addOverlay(self.villageLayer, "Settlements");
-			self.villageLayer.clearLayers();
             // For each catchment area polygon
 			_.each(
 				_.filter(data.features,
@@ -217,8 +254,7 @@ function displayMap(self, map) {
                     // Add it to the associative array
 					self.catchmentAreas[catchmentArea.properties["subject"]] = catchmentArea;
 
-                    // Create a village layer
-                    createCatchmentAreaVillageLayer(catchmentArea);
+                    addSettlementsForArea(catchmentArea);
 				}
             );
 
@@ -247,7 +283,7 @@ function displayMap(self, map) {
 
 			_.each(self.catchmentAreas, function(catchmentArea, i) {
 				// Update the data for each CatchmentAreaVillageLayer
-                createCatchmentAreaVillageLayer(catchmentArea);
+                addSettlementsForArea(catchmentArea);
 			});
 		}
 	});
@@ -275,7 +311,7 @@ $(document).ready(function() {
 <tr><td>Average distance of all settlements from health structure</td><td align="right"><%= properties["average_settlement_dist"] %></td></tr>\
 </table>');
 
-	self.settlementPopupTemplate = _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
+	self.settlementPopupTemplate= _.template('<a href="http://www.openstreetmap.org/edit?editor=potlatch2&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/potlatch.png"></a>\
 <a href="http://www.openstreetmap.org/edit?editor=remote&lat=<%= coordinate[1] %>&lon=<%= coordinate[0] %>&zoom=18">\
 <img src="resources/img/josm.png"></a>\
@@ -285,34 +321,7 @@ $(document).ready(function() {
 <tr><td>Population</td><td align="right"><%= properties["population"] %></td></tr>\
 </table>');
 
-	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 18,
-		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-	});
-
-	var map = L.map( 'map', {
-		zoom: 12,
-		layers: [self.tileLayer],
-	}).setView([12.4822, -11.9463], 11);
-    // TODO: Not sure why the above call to setView is needed
-
-	self.amenities = ["hospital", "doctors", "dentist"];
-    // This contains the layers for each of the above amenities
-    self.amenityLayers = {};
-    self.catchmentAreas = {};
-    self.villageLayers = {};
-
-	self.layersControl = L.control.layers().addTo(map);
-
-	L.control.locate().addTo(map);
-
-    var legend = L.control({position: 'bottomright'});
-    legend.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<img src="resources/img/hospital.png"> Hospital<br>';
-        return div;
-    };
-    legend.addTo(map);
+	var map = initMap(self);
 
 	map.on('moveend', function(e) {
 		displayMap(self, map);
