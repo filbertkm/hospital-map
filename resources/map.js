@@ -14,8 +14,8 @@ function initMap(self) {
     self.amenityLayers = {};  // contains the layers for each amenity type
     self.catchmentAreas = {};
 
-	// Create the village layer
-	self.villageLayer = L.geoJson({ type: "FeatureCollection", features: [] }, {
+	// Create the settlement layer
+	self.settlementLayer = L.geoJson({ type: "FeatureCollection", features: [] }, {
 		style: function(feature) {
 			return {fillColor: 'green',
 					weight: 2,
@@ -25,11 +25,11 @@ function initMap(self) {
 					fillOpacity: 0.1};
 		}
 	});
-	map.addLayer(self.villageLayer);
+	map.addLayer(self.settlementLayer);
 
 	// Layer controller
 	self.layersControl = L.control.layers().addTo(map);
-	self.layersControl.addOverlay(self.villageLayer, "Settlements");
+	self.layersControl.addOverlay(self.settlementLayer, "Settlements");
 
 	L.control.locate().addTo(map);
 
@@ -197,7 +197,7 @@ function displayMap(self, map) {
         });
     }
 
-    function createCatchmentAreaVillageLayer(catchmentArea) {
+    function addSettlementsForArea(catchmentArea) {
 		if (typeof catchmentArea.settlements != 'undefined') {
 			return;
 		}
@@ -211,14 +211,14 @@ function displayMap(self, map) {
 
         var query = 'data=[out:json];(node(poly:"' + poly + '");<;node(w););out;';
 
-        // Fetch village data
+        // Fetch settlement data
         self.converter.fetch("http://overpass-api.de/api/interpreter", query, zoom, function(data) {
             data.features = _.filter(data.features, function(feature) {
                                     return _.contains(_.keys(feature.properties), "place") ||
                                        feature.properties["landuse"] == "residential";
                                 });
             catchmentArea.settlements = data.features;
-			self.villageLayer.addData(data);
+			self.settlementLayer.addData(data);
         });
     }
 
@@ -238,8 +238,7 @@ function displayMap(self, map) {
                     // Add it to the associative array
 					self.catchmentAreas[catchmentArea.properties["subject"]] = catchmentArea;
 
-                    // Create a village layer
-                    createCatchmentAreaVillageLayer(catchmentArea);
+                    addSettlementsForArea(catchmentArea);
 				}
             );
 
@@ -268,7 +267,7 @@ function displayMap(self, map) {
 
 			_.each(self.catchmentAreas, function(catchmentArea, i) {
 				// Update the data for each CatchmentAreaVillageLayer
-                createCatchmentAreaVillageLayer(catchmentArea);
+                addSettlementsForArea(catchmentArea);
 			});
 		}
 	});
