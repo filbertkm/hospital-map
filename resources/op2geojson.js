@@ -20,7 +20,7 @@ op2geojson = function() {
 
 					// As the nodes do not relate to other bits,
 					// they can be added here
-					if (item.tags != undefined && item.tags['amenity'] != undefined) {
+					if (item.tags != undefined) {
 						features.push( instance.point(item) );
 					}
 
