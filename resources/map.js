@@ -132,6 +132,8 @@ function initMap(self) {
 		layers: [self.tileLayer],
 	}).setView([12.4822, -11.9463], 11);
 
+    var hash = new L.Hash(map);
+
 	self.amenitiesShown = ["hospital"];
     self.amenities = {};
     self.amenityLayers = {};  // contains the layers for each amenity type

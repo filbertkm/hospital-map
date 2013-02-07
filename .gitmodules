@@ -4,3 +4,6 @@
 [submodule "resources/openlayers"]
 	path = resources/openlayers
 	url = git://github.com/openlayers/openlayers.git
+[submodule "resources/leaflet-hash"]
+	path = resources/leaflet-hash
+	url = git://github.com/mlevans/leaflet-hash.git
