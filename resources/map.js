@@ -221,9 +221,7 @@ function initMap(self) {
 
                 layer.bindPopup(self.editorTemplate({coordinate: center}) +
                     self.healthPostTemplate(feature.properties) +
-                    '<div id="' + catchmentArea.id + '">' +
-                        self.catchmentAreaTemplate(catchmentAreaProperties(catchmentArea, feature)) +
-                    '</div>');
+                    self.catchmentAreaTemplate(catchmentAreaProperties(catchmentArea, feature)));
 
                 self.markers[feature.id] = layer;
             },
@@ -329,7 +327,18 @@ function displayMap(self, map) {
                 });
                 self.settlementsLayerGroup.addLayer(self.catchmentAreaSettlementsLayers[catchmentArea.id]);
 
-                $('#' + catchmentArea.id).html(self.catchmentAreaTemplate(catchmentAreaProperties(catchmentArea, self.healthPosts[catchmentArea.properties["subject"]])));
+                var healthPost = self.healthPosts[catchmentArea.properties.subject];
+
+                var center;
+                if (healthPost.geometry.type === "Point") {
+                    center = healthPost.geometry.coordinates;
+                } else {
+                    center = healthPost.geometry.coordinates[0];
+                }
+
+                self.markers[catchmentArea.properties.subject].bindPopup(self.editorTemplate({coordinate: center}) +
+                    self.healthPostTemplate(healthPost.properties) +
+                    self.catchmentAreaTemplate(catchmentAreaProperties(catchmentArea, healthPost)));
             }
         }
 
