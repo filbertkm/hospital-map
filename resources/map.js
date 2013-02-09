@@ -70,7 +70,9 @@ function catchmentAreaProperties(catchmentArea, healthPost) {
     _.each(catchmentArea.settlements, function (settlement) {
         var settlementGeo = format.parseGeometry(settlement.geometry);
 
-        var distance = settlementGeo.distanceTo(healthPostPoint);
+        var line = new OpenLayers.Geometry.LineString([healthPostPoint, settlementGeo]);
+        var distance = line.getGeodesicLength(Geographic);
+        //var distance = settlementGeo.distanceTo(healthPostPoint);
         sumOfDistances += distance;
         if (distance > maxDistance)
             maxDistance = distance;
@@ -139,6 +141,8 @@ function initMap(self) {
 
 	var miniMapTileLayer = new L.TileLayer(tileUrl, {minZoom: 0, maxZoom: 13, attribution: tileAttribution });
     var miniMap = new L.Control.MiniMap(miniMapTileLayer, { toggleDisplay: true }).addTo(map);
+
+    L.control.scale().addTo(map);
 
 	self.amenitiesShown = ["hospital"];
     self.amenities = {};
@@ -260,6 +264,14 @@ function initMap(self) {
     legend.addTo(map);
 
 	return map;
+}
+
+function formatDistance(distance) {
+    if (distance > 1000) {
+        return (distance/1000).toFixed(2) + "km";
+    } else {
+        return distance.toFixed(0) + "m";
+    }
 }
 
 function displayMap(self, map) {
@@ -435,8 +447,8 @@ $(document).ready(function() {
 <tr><td>Surface Area</td><td align="right"><%= area %></td></tr>\
 <tr><td>Number of Settlements</td><td align="right"><%= number_of_settlements %></td></tr>\
 <tr><td>Population</td><td align="right"><%= population %></td></tr>\
-<tr><td>Furthest distance from settlement to health structure</td><td align="right"><%= greatest_settlement_dist %></td></tr>\
-<tr><td>Average distance of all settlements from health structure</td><td align="right"><%= average_settlement_dist %></td></tr>\
+<tr><td>Furthest distance from settlement to health structure</td><td align="right"><%= formatDistance(greatest_settlement_dist) %></td></tr>\
+<tr><td>Average distance of all settlements from health structure</td><td align="right"><%= formatDistance(average_settlement_dist) %></td></tr>\
 </table>');
 
 	self.settlementTemplate = _.template('<h3>Settlement</h3>\
