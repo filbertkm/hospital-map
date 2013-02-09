@@ -7,3 +7,6 @@
 [submodule "resources/leaflet-hash"]
 	path = resources/leaflet-hash
 	url = git://github.com/mlevans/leaflet-hash.git
+[submodule "resources/leaflet-minimap"]
+	path = resources/leaflet-minimap
+	url = git://github.com/Norkart/Leaflet-MiniMap.git

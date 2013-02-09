@@ -121,9 +121,12 @@ function catchmentAreaProperties(catchmentArea, healthPost) {
 }
 
 function initMap(self) {
-	self.tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var tileUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    var tileAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+
+	self.tileLayer = L.tileLayer(tileUrl, {
 		maxZoom: 18,
-		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+		attribution: tileAttribution
 	});
 
 	// Create the map
@@ -133,6 +136,9 @@ function initMap(self) {
 	}).setView([12.4822, -11.9463], 11);
 
     var hash = new L.Hash(map);
+
+	var miniMapTileLayer = new L.TileLayer(tileUrl, {minZoom: 0, maxZoom: 13, attribution: tileAttribution });
+    var miniMap = new L.Control.MiniMap(miniMapTileLayer, { toggleDisplay: true }).addTo(map);
 
 	self.amenitiesShown = ["hospital"];
     self.amenities = {};
