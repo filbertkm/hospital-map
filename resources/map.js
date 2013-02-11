@@ -267,7 +267,9 @@ function initMap(self) {
 }
 
 function formatDistance(distance) {
-    if (distance > 1000) {
+    if (distance == "Unknown") {
+        return distance;
+    } else if (distance > 1000) {
         return (distance/1000).toFixed(2) + "km";
     } else {
         return distance.toFixed(0) + "m";
