@@ -5,41 +5,76 @@ op2geojson = function() {
 	var instance = {},
 		geojson;
 
-	instance.fetch = function(url, data, callback) {
-    	$.post(url, data,
-			function(data) {
-				// List all of the returned nodes
-				var nodes = [];
-				$.each(data.elements, function(i, item) {
-					if (item.type === 'node') {
-						nodes[item.id] = item;
-					}
-				});
+	instance.fetch = function(url, data, zoom, callback) {
+		var postCallback = function(data) {
+			// Add nodes and ways to the layer
+			var features = [];
 
-				// Add nodes and ways to the layer
-				var features = [];
-				$.each(data.elements, function(i, item) {
-					if( item.type === 'node' && item.tags != undefined
-							&& item.tags['amenity'] != undefined) {
+			// Process the data
+			var nodes = {};
+			var ways = {};
+			var relations = {};
+			$.each(data.elements, function(i, item) {
+				if (item.type === 'node') {
+					nodes[item.id] = item;
+
+					// As the nodes do not relate to other bits,
+					// they can be added here
+					if (item.tags != undefined) {
 						features.push( instance.point(item) );
-					} else if (item.type === 'way') {
-						features.push( instance.lineString(item, nodes) );
 					}
-				});
-				geojson = instance.featureCollection(features);
-				callback(geojson);
-			}
-		, "json");;
+
+				} else if (item.type === 'way') {
+					ways[item.id] = item;
+				} else if (item.type === 'relation') {
+					relations[item.id] = item;
+				}
+			});
+
+			$.each(ways, function(i, way) {
+				if (zoom < 16) {
+					var node = nodes[way.nodes[0]];
+					var point = {
+						type : "Feature",
+						id : way.id,
+						geometry : {
+							type : "Point",
+							coordinates : [node.lon,node.lat]
+						},
+						properties : {}
+					};
+					_.extend(point.properties, way.tags);
+					features.push(point);
+				} else {
+					features.push(instance.lineString(way, nodes));
+				}
+			});
+
+			$.each(relations, function(i, relation) {
+				if (relation.tags != undefined &&
+					relation.tags['type'] == 'boundary' &&
+					relation.tags['boundary'] == 'catchment_area') {
+
+					var poly = instance.polygon(relation, ways, nodes);
+					poly.id = relation.id;
+					features.push(poly);
+				}
+			});
+
+			geojson = instance.featureCollection(features);
+			callback(geojson);
+		}
+    	$.post(url, data, postCallback, "json");
 	};
 
 	instance.point = function(node) {
 		var point = {
-			"type" : "Feature",
-			"geometry" : {
-				"type" : "Point",
-				"coordinates" : [node.lon,node.lat]
+			type : "Feature",
+			geometry : {
+				type : "Point",
+				coordinates : [node.lon,node.lat]
 			},
-			"properties" : {}
+			properties : {}
 		};
 		_.extend(point.properties, node.tags);
 		return point;
@@ -55,12 +90,12 @@ op2geojson = function() {
 
 		// Create the LineString
 		var lineString = {
-			"type" : "Feature",
-			"geometry" : {
-				"type" : "LineString",
-				"coordinates" : coordinates
+			type : "Feature",
+			geometry : {
+				type : "LineString",
+				coordinates : coordinates
 			},
-			"properties" : {}
+			properties : {}
 		};
 
 		// Add the tags
@@ -70,17 +105,66 @@ op2geojson = function() {
 
 	instance.featureCollection = function(features) {
 		collection = {
-			"type" : "FeatureCollection",
-			"features" : features
+			type : "FeatureCollection",
+			features : features
 		};
 		return collection;
 	}
 
-	instance.geojson = function() {
-		url = "http://overpass-api.de/api/interpreter?data=[out:json];node[amenity=hospital](52.34,13.3,52.52,13.6);out;";
-		instance.fetch(url, function(data) {
-			return data;
+	instance.polygon = function(relation, ways, nodes) {
+        polyCoords = [];
+        var firstCheck = true;
+        var subject;
+
+		$.each(relation.members, function(i, member) {
+            if (member.role == "outer") {
+                var way = ways[member.ref];
+                if (typeof way == 'undefined') return;
+                var wayCoords = instance.lineString(way, nodes).geometry.coordinates;
+				var numNodes = wayCoords.length
+
+                // Need to ensure that the first way is in the correct direction, but this can
+                // only be checked when looking at the second way
+                if (firstCheck && polyCoords.length != 0) {
+                    firstCheck = false;
+                    if ((polyCoords[0][0] == wayCoords[0][0] &&
+                        polyCoords[0][1] == wayCoords[0][1]) ||
+                        (polyCoords[0][0] == wayCoords[numNodes - 1][0] &&
+                        polyCoords[0][1] == wayCoords[numNodes - 1][1])) {
+
+                        polyCoords.reverse();
+                    }
+                }
+
+                if (polyCoords.length != 0) {
+                    // If this way is backward
+                    if (polyCoords[polyCoords.length - 1][0] != wayCoords[0][0] ||
+                        polyCoords[polyCoords.length - 1][1] != wayCoords[0][1]) {
+
+                        wayCoords.reverse();
+                    }
+                    polyCoords.pop();
+                }
+			    polyCoords = polyCoords.concat( wayCoords );
+            } else if (member.role == "subject") {
+                subject = member.ref;
+            }
 		});
+
+        var poly = {
+			type : "Feature",
+			geometry : {
+				type : "Polygon",
+				coordinates : [polyCoords]
+			},
+			properties : {}
+		};
+
+		// Add the tags
+		_.extend(poly.properties, relation.tags);
+        poly.properties["subject"] = subject;
+
+		return poly;
 	}
 
 	return instance;

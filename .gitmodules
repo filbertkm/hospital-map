@@ -1,0 +1,12 @@
+[submodule "resources/leaflet"]
+	path = resources/leaflet
+	url = git://github.com/CloudMade/Leaflet.git
+[submodule "resources/openlayers"]
+	path = resources/openlayers
+	url = git://github.com/openlayers/openlayers.git
+[submodule "resources/leaflet-hash"]
+	path = resources/leaflet-hash
+	url = git://github.com/mlevans/leaflet-hash.git
+[submodule "resources/leaflet-minimap"]
+	path = resources/leaflet-minimap
+	url = git://github.com/Norkart/Leaflet-MiniMap.git
