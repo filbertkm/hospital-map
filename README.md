@@ -3,7 +3,7 @@ HealthMap
 
 # Summary 
 
-[Health Map](http://hospital-map.github.com/hospital-map) shows health care institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them. It targets the problem [Granular Health Map](http://www.rhok.org/problems/granular-health-map).
+[Health Map](http://hospital-map.github.com/hospital-map) shows health care institutions like hospitals, clinics and doctors. Patients, health care workers, journalists or emergency response teams can find out which health care institutions have given property via filtering boolean attributes like wheelchairs/emergency. While displaying the institutions on a map people also see where to find them. It targets the problem [Granular Health Map](http://www.rhok.org/problems/granular-health-map) at Random Hacks of Kindness (RHoK) December 2012.
 
 ![See all health care institutions](http://jups.pegasus.uberspace.de/dropbox/all-health-care.jpg)
 
@@ -11,7 +11,7 @@ HealthMap
 
 # What we accomplished during the RHoK December 2012
 
-Creating a JavaScript only application which fetches the [Overpass API](http://overpass-api.de/) (Open Street Map) for health care institutions. The app renders them on a map using [Leaflet](http://leafletjs.com/) which offers mobile friendly maps with layers and controls.
+Creating a JavaScript only application which fetches the [Overpass API](http://overpass-api.de/) (Open Street Map) for health care institutions. The app renders them on a map using [Leaflet](http://leafletjs.com/) which offers mobile friendly maps with layers and controls. This project got awarded the 3rd prize at the Random Hack of Kindness Berlin in December 2012.
 
 # Traction
 
